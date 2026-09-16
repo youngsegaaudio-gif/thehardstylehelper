@@ -1,14 +1,335 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
-import { y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
-import { a as MicVocal, c as ExternalLink, d as Bookmark, f as BookmarkCheck, i as RotateCw, l as Disc3, n as Settings2, o as Lock, r as Search, s as LockOpen, u as Copy } from "../_libs/lucide-react.mjs";
-import { n as toast } from "../_libs/sonner.mjs";
-import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
+import { S as require_jsx_runtime, _ as createFileRoute, d as HeadContent, f as useRouterState, g as lazyRouteComponent, h as Outlet, m as createRouter, u as Scripts, v as createRootRoute, x as useRouter, y as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { t as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { a as union, i as string, n as number, r as object, t as literal } from "../_libs/zod.mjs";
+import { t as create } from "../_libs/zustand.mjs";
+import { n as clsx } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
-import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-B-rHRdke.js
+import { t as Toaster } from "../_libs/sonner.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/router-BftHCkTq.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
+var __defProp = Object.defineProperty;
+var __exportAll = (all, no_symbols) => {
+	let target = {};
+	for (var name in all) __defProp(target, name, {
+		get: all[name],
+		enumerable: true
+	});
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
+	return target;
+};
+var FALLBACK_MESSAGE = "An unexpected error occurred. Try reloading the page.";
+function errorMessage(error) {
+	if (error instanceof Error && error.message) return error.message;
+	if (typeof error === "string" && error) return error;
+	return FALLBACK_MESSAGE;
+}
+function AppErrorComponent({ error }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
+		className: "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "text-red-500",
+				"aria-hidden": "true",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, {
+					className: "size-10",
+					strokeWidth: 2
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-lg font-semibold",
+				children: "Something went wrong"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400",
+				children: errorMessage(error)
+			})
+		]
+	});
+}
+/**
+* App-wide client provider mounted once near the root (in `src/routes/__root.tsx`):
+*
+*   <AuthProvider><Outlet /></AuthProvider>
+*
+* Better Auth's React client (`@/lib/auth/client`) needs NO context provider —
+* its `useSession()` works standalone — so this is a passthrough today. It's
+* kept as the single, stable mount point for any future client-side providers
+* (e.g. a toast or theme provider) without churning the root shell.
+*/
+function AuthProvider({ children }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
+}
+var CONNECTOR_TOKEN_READY_EVENT = "grok:connector-token-ready";
+function isGrokEmbedderOrigin(origin) {
+	try {
+		const url = new URL(origin);
+		if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+		const host = url.hostname.toLowerCase();
+		if (host === "grok.com" || host.endsWith(".grok.com")) return true;
+		if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") return true;
+		return false;
+	} catch {
+		return false;
+	}
+}
+function isSandboxPreviewGuestHost(hostname) {
+	const host = hostname.toLowerCase();
+	return host === "grok-sandbox.com" || host.endsWith(".grok-sandbox.com");
+}
+function isRemintPreviewPair(guestHost, parentHost) {
+	const guest = guestHost.toLowerCase();
+	const parent = parentHost.toLowerCase();
+	const i = guest.indexOf(".preview.");
+	if (i <= 0) return false;
+	const label = guest.slice(0, i);
+	const rest = guest.slice(i + 9);
+	if (label.includes(".") || !rest.includes(".")) return false;
+	return parent === rest || parent === `grok.${rest}`;
+}
+function resolveParentEmbedderOrigin(parentIsSelf, referrer, ancestorOrigin, guestHostname = "") {
+	if (parentIsSelf) return null;
+	for (const candidate of [referrer, ancestorOrigin ?? ""].filter(Boolean)) try {
+		const url = new URL(candidate.includes("://") ? candidate : `https://${candidate}`);
+		if (url.protocol !== "https:" && url.protocol !== "http:") continue;
+		if (isGrokEmbedderOrigin(url.origin)) return url.origin;
+		if (isSandboxPreviewGuestHost(guestHostname) || isRemintPreviewPair(guestHostname, url.hostname)) return url.origin;
+	} catch {}
+	return null;
+}
+/**
+* Guest side of the grok-web ↔ sandbox preview postMessage bridge.
+*
+* Activates only when this page is framed by an allowlisted Grok embedder.
+* Top-level runs (download/export, local `npm run dev`, deployed sites) noop.
+*/
+var PREVIEW_BRIDGE_CHANNEL = "grok-preview-bridge";
+var EnvelopeSchema = object({
+	channel: literal(PREVIEW_BRIDGE_CHANNEL),
+	version: number().int().positive(),
+	type: string().min(1)
+});
+var HelloSchema = EnvelopeSchema.extend({ type: literal("hello") });
+var NavigateSchema = EnvelopeSchema.extend({
+	type: literal("navigate"),
+	path: string().min(1)
+});
+var HistorySchema = EnvelopeSchema.extend({
+	type: literal("history"),
+	delta: union([literal(-1), literal(1)])
+});
+var ConnectorTokenReadySchema = EnvelopeSchema.extend({ type: literal("connector-token-ready") });
+function isSafeBridgePath(path) {
+	if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return false;
+	try {
+		return new URL(path, "https://preview.invalid").origin === "https://preview.invalid";
+	} catch {
+		return false;
+	}
+}
+/**
+* Origin of the Grok embedder framing this page, or null when the page runs
+* top-level (download/export, local `npm run dev`, deployed sites) or under a
+* non-Grok parent. Client-only; null during SSR.
+*/
+function resolveCurrentEmbedderOrigin() {
+	if (typeof window === "undefined") return null;
+	const ancestorOrigin = typeof location.ancestorOrigins !== "undefined" && location.ancestorOrigins.length > 0 ? location.ancestorOrigins[0] : null;
+	return resolveParentEmbedderOrigin(window.parent === window, document.referrer, ancestorOrigin, window.location.hostname);
+}
+/**
+* Install host↔guest messaging. Returns a dispose function.
+* Noops (returns a no-op dispose) when not embedded under a Grok parent.
+*/
+function installPreviewHostBridge(options = {}) {
+	const parentOrigin = resolveCurrentEmbedderOrigin();
+	if (parentOrigin === null) return () => {};
+	const ROOT_STATE_KEY = "__grokPreviewBridgeRoot";
+	const originalPushState = window.history.pushState.bind(window.history);
+	const originalReplaceState = window.history.replaceState.bind(window.history);
+	const isAtHistoryRoot = () => {
+		const state = window.history.state;
+		return Boolean(state && typeof state === "object" && state[ROOT_STATE_KEY] === true);
+	};
+	try {
+		const current = window.history.state;
+		if (!(current !== null && typeof current === "object" && Object.prototype.hasOwnProperty.call(current, ROOT_STATE_KEY))) {
+			const isRoot = window.history.length <= 1;
+			originalReplaceState(current && typeof current === "object" ? {
+				...current,
+				[ROOT_STATE_KEY]: isRoot
+			} : { [ROOT_STATE_KEY]: isRoot }, "", window.location.href);
+		}
+	} catch {}
+	const post = (message) => {
+		window.parent.postMessage(message, parentOrigin);
+	};
+	const reportLocation = () => {
+		post({
+			channel: PREVIEW_BRIDGE_CHANNEL,
+			version: 1,
+			type: "location",
+			path: window.location.pathname || "/",
+			search: window.location.search,
+			hash: window.location.hash
+		});
+	};
+	const reportRoutes = () => {
+		const paths = options.getRoutePaths?.() ?? [];
+		post({
+			channel: PREVIEW_BRIDGE_CHANNEL,
+			version: 1,
+			type: "routes",
+			paths
+		});
+	};
+	const defaultNavigate = (path) => {
+		if (!isSafeBridgePath(path)) return;
+		try {
+			const url = new URL(path, window.location.origin);
+			if (url.origin !== window.location.origin) return;
+			const next = `${url.pathname}${url.search}${url.hash}`;
+			window.history.pushState(window.history.state, "", next);
+			window.dispatchEvent(new PopStateEvent("popstate", { state: window.history.state }));
+		} catch {}
+	};
+	const navigate = (path) => {
+		if (!isSafeBridgePath(path)) return;
+		if (options.navigate) {
+			options.navigate(path);
+			return;
+		}
+		defaultNavigate(path);
+	};
+	const announce = () => {
+		reportLocation();
+		reportRoutes();
+		post({
+			channel: PREVIEW_BRIDGE_CHANNEL,
+			version: 1,
+			type: "ready"
+		});
+	};
+	const onHello = (data) => {
+		if (!HelloSchema.safeParse(data).success) return;
+		announce();
+	};
+	const onNavigate = (data) => {
+		const parsed = NavigateSchema.safeParse(data);
+		if (!parsed.success) return;
+		navigate(parsed.data.path);
+		queueMicrotask(reportLocation);
+	};
+	const onHistory = (data) => {
+		const parsed = HistorySchema.safeParse(data);
+		if (!parsed.success) return;
+		if (parsed.data.delta === -1 && isAtHistoryRoot()) return;
+		window.history.go(parsed.data.delta);
+	};
+	const onConnectorTokenReady = (data) => {
+		if (!ConnectorTokenReadySchema.safeParse(data).success) return;
+		window.dispatchEvent(new Event(CONNECTOR_TOKEN_READY_EVENT));
+	};
+	const hostMessageHandlers = /* @__PURE__ */ new Map([
+		["hello", onHello],
+		["navigate", onNavigate],
+		["history", onHistory],
+		["connector-token-ready", onConnectorTokenReady]
+	]);
+	const onMessage = (event) => {
+		if (event.source !== window.parent) return;
+		if (event.origin !== parentOrigin) return;
+		const envelope = EnvelopeSchema.safeParse(event.data);
+		if (!envelope.success || envelope.data.version !== 1) return;
+		hostMessageHandlers.get(envelope.data.type)?.(event.data);
+	};
+	const onPopState = () => {
+		reportLocation();
+	};
+	const onHashChange = () => {
+		reportLocation();
+	};
+	window.history.pushState = (data, unused, url) => {
+		const next = data && typeof data === "object" ? {
+			...data,
+			[ROOT_STATE_KEY]: false
+		} : data;
+		originalPushState(next, unused, url);
+		reportLocation();
+	};
+	window.history.replaceState = (data, unused, url) => {
+		const next = isAtHistoryRoot() ? {
+			...data && typeof data === "object" ? data : {},
+			[ROOT_STATE_KEY]: true
+		} : data;
+		originalReplaceState(next, unused, url);
+		reportLocation();
+	};
+	window.addEventListener("message", onMessage);
+	window.addEventListener("popstate", onPopState);
+	window.addEventListener("hashchange", onHashChange);
+	announce();
+	return () => {
+		window.removeEventListener("message", onMessage);
+		window.removeEventListener("popstate", onPopState);
+		window.removeEventListener("hashchange", onHashChange);
+		window.history.pushState = originalPushState;
+		window.history.replaceState = originalReplaceState;
+	};
+}
+/** Collect static path patterns from a TanStack route tree (best-effort). */
+function collectRoutePathsFromTree(routeTree) {
+	const paths = /* @__PURE__ */ new Set();
+	const walk = (node) => {
+		if (!node || typeof node !== "object") return;
+		const record = node;
+		const full = typeof record.fullPath === "string" ? record.fullPath : typeof record.path === "string" ? record.path : null;
+		if (full !== null && full !== "") paths.add(full.startsWith("/") ? full : `/${full}`);
+		else if (full === "") paths.add("/");
+		const children = record.children;
+		if (Array.isArray(children)) for (const child of children) walk(child);
+		else if (children && typeof children === "object") for (const child of Object.values(children)) walk(child);
+	};
+	walk(routeTree);
+	return [...paths];
+}
+/**
+* Mount once in `__root.tsx` so the Grok preview chrome can drive navigation
+* (and later receive registered routes). Noops when the app is not embedded.
+*/
+function PreviewHostBridge() {
+	const router = useRouter();
+	(0, import_react.useEffect)(() => {
+		return installPreviewHostBridge({
+			navigate: (path) => {
+				router.history.push(path);
+			},
+			getRoutePaths: () => collectRoutePathsFromTree(router.routeTree)
+		});
+	}, [router]);
+	return null;
+}
+function isTopWindow() {
+	try {
+		return window.self === window.top;
+	} catch {
+		return false;
+	}
+}
+function registerServiceWorker() {
+	if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+	if (!isTopWindow()) return;
+	if (location.protocol !== "https:") return;
+	navigator.serviceWorker.register("/sw.js", { scope: "/" });
+}
+function PwaRegister() {
+	(0, import_react.useEffect)(() => {
+		registerServiceWorker();
+	}, []);
+	return null;
+}
 var GENRES = [
 	{
 		id: "euphoric",
@@ -12067,76 +12388,8 @@ function youtubeSearch(q) {
 function discogsSearch(q) {
 	return `https://www.discogs.com/search/?q=${encodeURIComponent(q)}&type=all`;
 }
-function cn(...inputs) {
-	return twMerge(clsx(inputs));
-}
-var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[opacity,transform,background-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40 active:not-disabled:scale-[0.96] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0", {
-	variants: {
-		variant: {
-			default: "bg-primary text-primary-foreground hover:opacity-90",
-			secondary: "bg-surface-2 text-foreground shadow-border hover:bg-surface-3",
-			outline: "bg-transparent text-foreground shadow-border hover:bg-surface-2",
-			ghost: "bg-transparent text-muted hover:text-foreground hover:bg-surface-2",
-			destructive: "bg-danger text-primary-foreground hover:opacity-90"
-		},
-		size: {
-			default: "h-11 px-4",
-			sm: "h-9 px-3 text-xs",
-			lg: "h-12 px-5",
-			icon: "size-11"
-		}
-	},
-	defaultVariants: {
-		variant: "default",
-		size: "default"
-	}
-});
-function Button({ className, variant, size, asChild = false, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(asChild ? Slot : "button", {
-		className: cn(buttonVariants({
-			variant,
-			size
-		}), className),
-		...props
-	});
-}
-function Input({ className, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-		className: cn("flex h-11 w-full rounded-md bg-surface-2 px-3 text-sm text-foreground shadow-border", "placeholder:text-subtle", "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", "disabled:opacity-40", className),
-		...props
-	});
-}
 var SAVE_KEY = "hs-songs-saved-v1";
 var YOU_KEY = "hs-songs-you-v1";
-var ERAS = [
-	{
-		id: "all",
-		label: "All eras"
-	},
-	{
-		id: "90s",
-		label: "90s"
-	},
-	{
-		id: "00s",
-		label: "00s"
-	},
-	{
-		id: "10s",
-		label: "10s"
-	},
-	{
-		id: "20s",
-		label: "20s"
-	}
-];
-var FILL = {
-	intro: "bg-section-intro",
-	break: "bg-section-break",
-	build: "bg-section-build",
-	drop: "bg-section-drop",
-	outro: "bg-section-outro"
-};
 function loadSaved() {
 	try {
 		const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || "[]");
@@ -12157,776 +12410,415 @@ function loadYou() {
 		return YOU_DEFAULT;
 	}
 }
-function Chip({ active, onClick, children, locked }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-		type: "button",
-		onClick,
-		className: cn("inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3.5 text-xs font-medium transition-[background-color,color,opacity] duration-150", active ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted shadow-border hover:text-foreground"),
-		children: [locked ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lock, { className: "size-3" }) : null, children]
-	});
-}
-function yt(q) {
-	return youtubeSearch(q);
-}
-function SongsFace() {
-	const [tab, setTab] = (0, import_react.useState)("ideas");
-	const [genre, setGenre] = (0, import_react.useState)("all");
-	const [era, setEra] = (0, import_react.useState)("all");
-	const [nicheOnly, setNicheOnly] = (0, import_react.useState)(false);
-	const [q, setQ] = (0, import_react.useState)("");
-	const [style, setStyle] = (0, import_react.useState)("all");
-	const [lockGenre, setLockGenre] = (0, import_react.useState)(false);
-	const [lockArtist, setLockArtist] = (0, import_react.useState)(null);
-	const [lockVocal, setLockVocal] = (0, import_react.useState)(null);
-	const [you, setYou] = (0, import_react.useState)(YOU_DEFAULT);
-	const youRef = (0, import_react.useRef)(you);
-	youRef.current = you;
-	const [idea, setIdea] = (0, import_react.useState)(() => rollIdea({
+var useVs = create((set, get) => ({
+	ready: false,
+	idea: rollIdea({
 		seed: 7,
 		nicheOnly: false,
 		you: YOU_DEFAULT
-	}));
-	const [saved, setSaved] = (0, import_react.useState)([]);
-	const [ready, setReady] = (0, import_react.useState)(false);
-	(0, import_react.useEffect)(() => {
-		setSaved(loadSaved());
-		setYou(loadYou());
-		setReady(true);
-	}, []);
-	const artistHits = (0, import_react.useMemo)(() => searchArtists(q, genre), [q, genre]);
-	const vocalHits = (0, import_react.useMemo)(() => searchVocals(q, era, nicheOnly, style), [
-		q,
-		era,
-		nicheOnly,
-		style
-	]);
-	const grouped = (0, import_react.useMemo)(() => {
-		const map = /* @__PURE__ */ new Map();
-		for (const g of GENRES) map.set(g.id, []);
-		for (const a of artistHits) map.get(a.genre)?.push(a);
-		return GENRES.map((g) => ({
-			...g,
-			acts: map.get(g.id) ?? []
-		})).filter((g) => g.acts.length);
-	}, [artistHits]);
-	const isSaved = saved.some((s) => s.seed === idea.seed);
-	const youLocked = you.kick !== "any" || you.bass !== "any" || you.hook !== "any" || you.vox !== "any" || you.phrases !== "mix" || you.key !== "any";
-	function persist(next) {
-		setSaved(next);
+	}),
+	you: YOU_DEFAULT,
+	saved: [],
+	genre: "all",
+	era: "all",
+	nicheOnly: false,
+	style: "all",
+	q: "",
+	lockGenre: false,
+	lockArtist: null,
+	lockVocal: null,
+	hydrate: () => {
+		if (get().ready) return;
+		set({
+			ready: true,
+			you: loadYou(),
+			saved: loadSaved()
+		});
+	},
+	setQ: (q) => set({ q }),
+	setEra: (era) => set({ era }),
+	setStyle: (style) => set({
+		style,
+		q: ""
+	}),
+	setNiche: (nicheOnly) => set({ nicheOnly }),
+	setGenre: (genre, lock) => set({
+		genre,
+		lockGenre: genre === "all" ? false : lock ?? false
+	}),
+	persistYou: (patch) => {
+		const you = {
+			...get().you,
+			...patch
+		};
+		try {
+			localStorage.setItem(YOU_KEY, JSON.stringify(you));
+		} catch {}
+		set({ you });
+	},
+	resetYou: () => {
+		try {
+			localStorage.setItem(YOU_KEY, JSON.stringify(YOU_DEFAULT));
+		} catch {}
+		set({ you: YOU_DEFAULT });
+	},
+	roll: (extra) => {
+		const s = get();
+		const lockVocal = extra?.vocalId !== void 0 ? extra.vocalId : s.lockVocal;
+		const lockArtist = extra?.artistId !== void 0 ? extra.artistId : s.lockArtist;
+		const next = rollIdea({
+			genre: extra?.genre ?? (s.genre !== "all" ? s.genre : "all"),
+			era: extra?.era ?? s.era,
+			nicheOnly: extra?.nicheOnly ?? s.nicheOnly,
+			artistId: extra?.artistId ?? lockArtist,
+			vocalId: extra?.vocalId ?? lockVocal,
+			q: extra?.q ?? s.q,
+			you: extra?.you ?? s.you,
+			seed: extra?.seed ?? Date.now() ^ Math.floor(Math.random() * 1e9)
+		});
+		set({
+			idea: next,
+			lockVocal,
+			lockArtist
+		});
+		return next;
+	},
+	saveIdea: () => {
+		const { idea, saved } = get();
+		const exists = saved.some((x) => x.seed === idea.seed);
+		const next = exists ? saved.filter((x) => x.seed !== idea.seed) : [idea, ...saved.filter((x) => x.seed !== idea.seed)].slice(0, 40);
 		try {
 			localStorage.setItem(SAVE_KEY, JSON.stringify(next));
 		} catch {}
-	}
-	function persistYou(patch) {
-		setYou((prev) => {
-			const next = {
-				...prev,
-				...patch
-			};
-			try {
-				localStorage.setItem(YOU_KEY, JSON.stringify(next));
-			} catch {}
-			youRef.current = next;
-			return next;
-		});
-	}
-	function resetYou() {
-		persistYou(YOU_DEFAULT);
-	}
-	function roll(extra) {
-		const next = rollIdea({
-			genre: extra?.genre ?? (genre !== "all" ? genre : "all"),
-			era,
-			nicheOnly,
-			artistId: extra?.artistId ?? lockArtist,
-			vocalId: extra?.vocalId ?? lockVocal,
-			q: extra?.q ?? q,
-			you: extra?.you ?? youRef.current,
-			seed: Date.now() ^ Math.floor(Math.random() * 1e9)
-		});
-		setIdea(next);
-		setTab("ideas");
-	}
-	function saveIdea() {
-		if (isSaved) {
-			persist(saved.filter((s) => s.seed !== idea.seed));
-			toast("Removed from saved");
-			return;
-		}
-		persist([idea, ...saved.filter((s) => s.seed !== idea.seed)].slice(0, 40));
-		toast("Saved on this device");
-	}
-	async function copyIdea(target = idea) {
+		set({ saved: next });
+		return exists ? "removed" : "saved";
+	},
+	copyIdea: async (target) => {
 		try {
-			await navigator.clipboard.writeText(ideaText(target));
-			toast("Notes copied");
+			await navigator.clipboard.writeText(ideaText(target ?? get().idea));
+			return true;
 		} catch {
-			toast("Could not copy");
+			return false;
 		}
+	},
+	unlockArtist: () => set({ lockArtist: null }),
+	unlockVocal: () => set({ lockVocal: null }),
+	pickVocal: (v) => get().roll({ vocalId: v.id }),
+	pickArtist: (a) => {
+		set({
+			genre: a.genre,
+			lockGenre: true
+		});
+		return get().roll({
+			artistId: a.id,
+			genre: a.genre
+		});
+	},
+	openSaved: (idea) => set({ idea }),
+	removeSaved: (idea) => {
+		const next = get().saved.filter((x) => x.seed !== idea.seed);
+		try {
+			localStorage.setItem(SAVE_KEY, JSON.stringify(next));
+		} catch {}
+		set({ saved: next });
 	}
+}));
+function youLocked(you) {
+	return you.kick !== "any" || you.bass !== "any" || you.hook !== "any" || you.vox !== "any" || you.phrases !== "mix" || you.key !== "any";
+}
+var FEATURED = [
+	"alice-deejay-better-off-alone",
+	"haddaway-what-is-love",
+	"cascada-everytime-we-touch",
+	"crystal-waters-gypsy-woman",
+	"2-unlimited-no-limit",
+	"la-bouche-be-my-lover",
+	"gala-freed-from-desire",
+	"robin-s-show-me-love",
+	"dune-hardcore-vibes",
+	"party-animals-have-you-ever-been-mellow"
+].map((id) => VOCALS.find((v) => v.id === id)).filter((v) => Boolean(v));
+function cn(...inputs) {
+	return twMerge(clsx(inputs));
+}
+var NAV = [
+	{
+		to: "/catalog",
+		label: "Catalog"
+	},
+	{
+		to: "/studio",
+		label: "Studio"
+	},
+	{
+		to: "/lanes",
+		label: "Lanes"
+	},
+	{
+		to: "/saved",
+		label: "Saved"
+	}
+];
+var FOOTER_NAV = [...NAV, {
+	to: "/sound",
+	label: "Sound"
+}];
+function SiteShell({ children }) {
+	const hydrate = useVs((s) => s.hydrate);
+	const saved = useVs((s) => s.saved);
+	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	(0, import_react.useEffect)(() => {
+		hydrate();
+	}, [hydrate]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "mx-auto w-full max-w-3xl",
+		className: "flex min-h-dvh flex-col bg-bg text-foreground",
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-				className: "relative mb-6 overflow-hidden rounded-xl bg-surface px-4 py-5 shadow-border sm:px-6 sm:py-7",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "hs-staff pointer-events-none absolute inset-x-4 top-4 h-10 opacity-40 sm:inset-x-6" }),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-						className: "relative text-[11px] font-medium uppercase tracking-[0.22em] text-muted",
-						children: [
-							ARTISTS.length,
-							" lanes · ",
-							VOCALS.length,
-							" sample vocals · DJ 4×4"
-						]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
-						className: "font-display relative mt-2 text-[1.7rem] leading-[1.05] tracking-wide text-foreground sm:text-4xl",
-						children: ["VOCAL", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "block text-muted",
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
+				className: "sticky top-0 z-40 bg-bg shadow-border",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-6",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link, {
+						to: "/",
+						className: "font-display shrink-0 text-lg leading-none tracking-wide text-foreground",
+						children: ["VOCAL ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-muted",
 							children: "SOURCE"
 						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "relative mt-3 max-w-prose text-sm leading-relaxed text-muted",
-						children: "Vocals people chop into hardstyle. Not hardstyle tracks. 16-bar DJ phrases, 90% of rolls. Titles and years only — you source and clear the chop."
-					})
-				]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
-				className: "mb-4 flex gap-1 overflow-x-auto pb-1",
-				"aria-label": "Sections",
-				children: [
-					["ideas", "Ideas"],
-					["you", "You"],
-					["vocals", "Vocals"],
-					["artists", "Artists"],
-					["saved", `Saved${ready && saved.length ? ` ${saved.length}` : ""}`]
-				].map(([id, label]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => setTab(id),
-					className: cn("h-11 shrink-0 rounded-lg px-4 text-sm font-medium transition-[background-color,color] duration-150", tab === id ? "bg-primary text-primary-foreground" : "bg-transparent text-muted hover:bg-surface-2 hover:text-foreground"),
-					children: label
-				}, id))
-			}),
-			tab !== "you" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mb-4 flex flex-col gap-3",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "relative",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Search, { className: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
-							value: q,
-							onChange: (e) => setQ(e.target.value),
-							placeholder: tab === "artists" ? "Search acts" : tab === "vocals" ? "Search songs, artists, styles" : "Filter the next roll",
-							className: "pl-10",
-							"aria-label": "Search"
-						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "flex gap-2 overflow-x-auto pb-1",
-						children: tab === "vocals" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: style === "all",
-							onClick: () => setStyle("all"),
-							children: "All styles"
-						}), VOCAL_STYLES.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: style === s.id,
-							onClick: () => setStyle((cur) => cur === s.id ? "all" : s.id),
-							children: s.label
-						}, s.id))] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: genre === "all",
-							onClick: () => {
-								setGenre("all");
-								setLockGenre(false);
-							},
-							children: "All genres"
-						}), GENRES.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: genre === g.id,
-							locked: lockGenre && genre === g.id,
-							onClick: () => {
-								setGenre(g.id);
-								if (genre === g.id) setLockGenre((v) => !v);
-								else setLockGenre(false);
-							},
-							children: g.label
-						}, g.id))] })
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex flex-wrap gap-2",
-						children: [ERAS.map((e) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: era === e.id,
-							onClick: () => setEra(e.id),
-							children: e.label
-						}, e.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-							active: nicheOnly,
-							onClick: () => setNicheOnly((v) => !v),
-							children: "Niche cuts"
-						})]
-					})
-				]
-			}) : null,
-			tab === "ideas" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(IdeaPanel, {
-				idea,
-				isSaved,
-				lockArtist,
-				lockVocal,
-				lockGenre: lockGenre && genre !== "all",
-				youLocked,
-				onRoll: () => roll(),
-				onSave: saveIdea,
-				onCopy: () => void copyIdea(),
-				onUnlockArtist: () => setLockArtist(null),
-				onUnlockVocal: () => setLockVocal(null),
-				onYou: () => setTab("you")
-			}) : null,
-			tab === "you" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(YouPanel, {
-				you,
-				onChange: persistYou,
-				onRoll: () => roll(),
-				onReset: resetYou
-			}) : null,
-			tab === "vocals" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(VocalPanel, {
-				hits: vocalHits,
-				onPick: (v) => {
-					setLockVocal(v.id);
-					roll({ vocalId: v.id });
-				}
-			}) : null,
-			tab === "artists" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArtistPanel, {
-				grouped,
-				total: artistHits.length,
-				onPick: (a) => {
-					setLockArtist(a.id);
-					setGenre(a.genre);
-					setLockGenre(true);
-					roll({
-						artistId: a.id,
-						genre: a.genre
-					});
-				}
-			}) : null,
-			tab === "saved" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SavedPanel, {
-				ready,
-				saved,
-				onOpen: (item) => {
-					setIdea(item);
-					setTab("ideas");
-				},
-				onCopy: (item) => void copyIdea(item),
-				onRemove: (item) => persist(saved.filter((s) => s.seed !== item.seed))
-			}) : null,
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-8 pb-10 text-center text-xs leading-relaxed text-subtle",
-				children: "Search, sample, and clear what you use. This list is a starting point — not a stem pack and not a lyric sheet."
-			})
-		]
-	});
-}
-function PhraseStrip({ phrases, mode }) {
-	const bars = barsOf(phrases);
-	const units = bars / 16;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "flex items-baseline justify-between gap-3",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-				className: "text-[11px] font-medium uppercase tracking-[0.16em] text-muted",
-				children: [
-					mode === "dj" ? "DJ 4×4" : "Anthem",
-					" · ",
-					units,
-					" phrases · ",
-					bars,
-					" bars"
-				]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "text-[11px] text-subtle",
-				children: "16 = one phrase"
-			})]
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mt-2 flex h-14 overflow-hidden rounded-md",
-			children: phrases.map((p, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: cn("flex min-w-0 flex-col justify-center px-1.5", FILL[p.kind]),
-				style: {
-					flexGrow: p.bars,
-					flexBasis: 0
-				},
-				title: `${p.bars} ${p.label}`,
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "font-mono text-[11px] tabular-nums text-foreground",
-					children: p.bars
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-					className: "truncate text-[10px] leading-tight text-muted",
-					children: p.label
-				})]
-			}, `${p.kind}-${i}`))
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "mt-2 text-[11px] leading-relaxed text-subtle",
-			children: "Mix on the 1. Every block is a multiple of 16."
-		})
-	] });
-}
-function IdeaPanel({ idea, isSaved, lockArtist, lockVocal, lockGenre, youLocked, onRoll, onSave, onCopy, onUnlockArtist, onUnlockVocal, onYou }) {
-	const v = idea.vocal;
-	const a = idea.artist;
-	const sound = idea.sound;
-	const phrases = idea.phrases ?? [];
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "flex flex-col gap-4",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex flex-col gap-2 sm:flex-row",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
-					size: "lg",
-					className: "h-12 flex-1 font-display tracking-wide",
-					onClick: onRoll,
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCw, { className: "size-4" }), "Roll idea"]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "flex gap-2",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
-						variant: "secondary",
-						className: "flex-1 sm:flex-none",
-						onClick: onSave,
-						children: [isSaved ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookmarkCheck, { className: "size-4" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Bookmark, { className: "size-4" }), isSaved ? "Saved" : "Save"]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
-						variant: "outline",
-						className: "flex-1 sm:flex-none",
-						onClick: onCopy,
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Copy, { className: "size-4" }), "Copy"]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
+						className: "flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto",
+						"aria-label": "Site",
+						children: NAV.map((item) => {
+							const active = pathname === item.to;
+							const label = item.to === "/saved" && saved.length ? `Saved ${saved.length}` : item.label;
+							return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+								to: item.to,
+								className: cn("inline-flex h-11 shrink-0 items-center rounded-md px-2.5 text-sm font-medium transition-[background-color,color] duration-150 sm:px-3", active ? "bg-primary text-primary-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground"),
+								children: label
+							}, item.to);
+						})
 					})]
-				})]
+				})
 			}),
-			(lockArtist || lockVocal || lockGenre || youLocked) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex flex-wrap gap-2",
-				children: [
-					youLocked ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: onYou,
-						className: "inline-flex h-8 items-center gap-1 rounded-full bg-surface-2 px-3 text-xs text-muted hover:text-foreground",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Settings2, { className: "size-3" }), " Your sound"]
-					}) : null,
-					lockGenre ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-						className: "inline-flex h-8 items-center gap-1 rounded-full bg-surface-2 px-3 text-xs text-muted",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lock, { className: "size-3" }),
-							" ",
-							GENRE_LABEL[a.genre]
-						]
-					}) : null,
-					lockArtist ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: onUnlockArtist,
-						className: "inline-flex h-8 items-center gap-1 rounded-full bg-surface-2 px-3 text-xs text-muted hover:text-foreground",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LockOpen, { className: "size-3" }),
-							" ",
-							a.name
-						]
-					}) : null,
-					lockVocal ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						type: "button",
-						onClick: onUnlockVocal,
-						className: "inline-flex h-8 items-center gap-1 rounded-full bg-surface-2 px-3 text-xs text-muted hover:text-foreground",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LockOpen, { className: "size-3" }),
-							" ",
-							v.title
-						]
-					}) : null
-				]
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
+				className: "flex-1",
+				children
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
-				className: "rounded-xl bg-surface p-5 shadow-border sm:p-6",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-[11px] font-medium uppercase tracking-[0.18em] text-muted",
-						children: "Working title"
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						className: "font-display mt-1 text-3xl leading-none tracking-wide text-foreground sm:text-4xl",
-						children: idea.title
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-3 text-sm leading-relaxed text-muted",
-						children: idea.concept
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
-						className: "mt-5 grid gap-3 sm:grid-cols-2",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Lane",
-								value: `${a.name} · ${GENRE_LABEL[a.genre]}`
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Grid",
-								value: `${idea.bpm} BPM · ${idea.key}`
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Vocal source",
-								value: `${v.artist} — ${v.title} (${v.year})`
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Cut",
-								value: `${v.from} · ${v.chop}${v.niche ? " · niche" : ""}`
-							})
-						]
-					}),
-					sound ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
-						className: "mt-5 grid gap-3 sm:grid-cols-2",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Kick",
-								value: sound.kick
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Bass",
-								value: sound.bass
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Hook",
-								value: sound.hook
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Meta, {
-								label: "Vox",
-								value: sound.vox
-							})
-						]
-					}) : null,
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-5 text-sm leading-relaxed text-foreground",
-						children: v.why
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-2 text-sm leading-relaxed text-muted",
-						children: idea.chopHow
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "mt-5 rounded-lg bg-surface-2 p-4",
-						children: [
-							phrases.length ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PhraseStrip, {
-								phrases,
-								mode: idea.phraseMode ?? "dj"
-							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "text-[11px] font-medium uppercase tracking-[0.16em] text-muted",
-								children: "Map"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-1 font-mono text-sm leading-relaxed text-foreground",
-								children: idea.map
-							})] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+				className: "mt-auto border-t border-border",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "font-display text-lg tracking-wide text-foreground",
+							children: ["VOCAL ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-muted",
+								children: "SOURCE"
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 max-w-xs text-sm leading-relaxed text-muted",
+							children: "Vocals people chop into hardstyle. Not hardstyle tracks. Titles and years only."
+						})] }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs font-medium uppercase tracking-widest text-subtle",
+							children: "Explore"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-3 space-y-2 text-sm",
+							children: FOOTER_NAV.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+								to: item.to,
+								className: "text-muted hover:text-foreground",
+								children: item.label
+							}) }, item.to))
+						})] }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-4 text-[11px] font-medium uppercase tracking-[0.16em] text-muted",
-								children: "Layers"
+								className: "text-xs font-medium uppercase tracking-widest text-subtle",
+								children: "The pile"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-3 font-mono text-sm tabular-nums text-foreground",
+								children: [VOCALS.length, " sample vocals"]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "font-mono text-sm tabular-nums text-foreground",
+								children: [ARTISTS.length, " production lanes"]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-1 text-sm text-foreground",
-								children: idea.layers.join(" · ")
+								className: "mt-3 text-sm leading-relaxed text-muted",
+								children: "Search, sample, and clear what you use. Not a stem pack and not a lyric sheet."
 							})
-						]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
-						className: "mt-5 space-y-2",
-						children: idea.process.map((step, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-							className: "flex gap-3 text-sm leading-relaxed text-muted",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-mono w-4 shrink-0 text-subtle",
-								children: i + 1
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: step })]
-						}, i))
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "mt-5 flex flex-col gap-2 sm:flex-row",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-							asChild: true,
-							variant: "secondary",
-							className: "flex-1",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-								href: yt(idea.search),
-								target: "_blank",
-								rel: "noreferrer",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "size-4" }), "Search YouTube"]
-							})
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-							asChild: true,
-							variant: "outline",
-							className: "flex-1",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-								href: discogsSearch(idea.search),
-								target: "_blank",
-								rel: "noreferrer",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Disc3, { className: "size-4" }), "Search Discogs"]
-							})
-						})]
-					})
-				]
+						] })
+					]
+				})
 			})
 		]
 	});
 }
-function YouPanel({ you, onChange, onRoll, onReset }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "flex flex-col gap-5",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "text-sm leading-relaxed text-muted",
-				children: "Lock the sound of the next roll. Mix keeps DJ 4×4 phrases 90% of the time. Anything else stays random."
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex flex-col gap-2 sm:flex-row",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
-					size: "lg",
-					className: "h-12 flex-1 font-display tracking-wide",
-					onClick: onRoll,
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(RotateCw, { className: "size-4" }), "Roll with this"]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					variant: "outline",
-					className: "h-12",
-					onClick: onReset,
-					children: "Reset"
-				})]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Field, {
-				label: "Phrases",
-				children: [PHRASE_OPTS.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.phrases === o.id,
-					onClick: () => onChange({ phrases: o.id }),
-					children: o.label
-				}, o.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "w-full pt-1 text-[11px] text-subtle",
-					children: PHRASE_OPTS.find((o) => o.id === you.phrases)?.hint
-				})]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-				label: "Kick",
-				children: KICK_OPTS.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.kick === o.id,
-					onClick: () => onChange({ kick: o.id }),
-					children: o.label
-				}, o.id))
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-				label: "Bass",
-				children: BASS_OPTS.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.bass === o.id,
-					onClick: () => onChange({ bass: o.id }),
-					children: o.label
-				}, o.id))
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-				label: "Hook",
-				children: HOOK_OPTS.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.hook === o.id,
-					onClick: () => onChange({ hook: o.id }),
-					children: o.label
-				}, o.id))
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Field, {
-				label: "Vox",
-				children: VOX_OPTS.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.vox === o.id,
-					onClick: () => onChange({ vox: o.id }),
-					children: o.label
-				}, o.id))
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Field, {
-				label: "Key",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.key === "any",
-					onClick: () => onChange({ key: "any" }),
-					children: "Any"
-				}), KEYS.map((k) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
-					active: you.key === k,
-					onClick: () => onChange({ key: k }),
-					children: k.replace(" minor", " min")
-				}, k))]
-			})
+var styles_default = "/assets/styles-zd_WLO4t.css";
+var APP_NAME = "VOCAL SOURCE";
+var Route$6 = createRootRoute({
+	head: () => ({
+		meta: [
+			{ charSet: "utf-8" },
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1"
+			},
+			{ title: APP_NAME },
+			{
+				name: "description",
+				content: "VOCAL SOURCE. Vocals people chop into hardstyle — 90s to now. Not hardstyle tracks. Titles and years only."
+			},
+			{
+				name: "theme-color",
+				content: "#0c0c0b"
+			},
+			{
+				name: "mobile-web-app-capable",
+				content: "yes"
+			},
+			{
+				name: "apple-mobile-web-app-capable",
+				content: "yes"
+			},
+			{
+				name: "apple-mobile-web-app-title",
+				content: APP_NAME
+			},
+			{
+				name: "apple-mobile-web-app-status-bar-style",
+				content: "black-translucent"
+			}
+		],
+		links: [
+			{
+				rel: "icon",
+				type: "image/svg+xml",
+				href: "/favicon.svg"
+			},
+			{
+				rel: "apple-touch-icon",
+				href: "/icon-192.png"
+			},
+			{
+				rel: "manifest",
+				href: "/manifest.webmanifest"
+			},
+			{
+				rel: "stylesheet",
+				href: styles_default
+			},
+			{
+				rel: "manifest",
+				href: "/__grok/manifest.webmanifest"
+			},
+			{
+				rel: "apple-touch-icon",
+				href: "/__grok/icon-180.png"
+			},
+			{
+				rel: "preconnect",
+				href: "https://fonts.googleapis.com"
+			},
+			{
+				rel: "preconnect",
+				href: "https://fonts.gstatic.com",
+				crossOrigin: "anonymous"
+			},
+			{
+				rel: "stylesheet",
+				href: "https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600&display=swap"
+			}
 		]
-	});
-}
-function Field({ label, children }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "rounded-xl bg-surface p-4 shadow-border sm:p-5",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "text-[11px] font-medium uppercase tracking-[0.16em] text-muted",
-			children: label
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mt-3 flex flex-wrap gap-2",
-			children
-		})]
-	});
-}
-function Meta({ label, value }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
-		className: "text-[11px] font-medium uppercase tracking-[0.16em] text-subtle",
-		children: label
-	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-		className: "mt-0.5 text-sm leading-snug text-foreground",
-		children: value
-	})] });
-}
-function VocalPanel({ hits, onPick }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "mb-3 text-xs text-muted",
-			children: [hits.length, " source vocals · tap one to roll a hard-dance idea around it"]
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-			className: "grid gap-2 sm:grid-cols-2",
-			children: hits.map((v) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-				type: "button",
-				onClick: () => onPick(v),
-				className: "flex h-full w-full flex-col rounded-lg bg-surface p-4 text-left shadow-border transition-[background-color] duration-150 hover:bg-surface-2",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-						className: "flex items-start justify-between gap-2",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "text-sm font-semibold leading-snug text-foreground",
-							children: v.title
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "font-mono shrink-0 text-[11px] text-subtle",
-							children: v.year
-						})]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "mt-0.5 text-xs text-muted",
-						children: v.artist
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-						className: "mt-2 flex flex-wrap gap-1",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-full bg-surface-3 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted",
-								children: v.era
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-full bg-surface-3 px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted",
-								children: v.from
-							}),
-							v.niche ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-full bg-surface-3 px-2 py-0.5 text-[10px] uppercase tracking-wide text-foreground",
-								children: "niche"
-							}) : null
-						]
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "mt-2 line-clamp-2 text-xs leading-relaxed text-muted",
-						children: v.why
-					})
-				]
-			}) }, v.id))
-		}),
-		hits.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "rounded-lg bg-surface p-6 text-sm text-muted shadow-border",
-			children: "Nothing in that filter. Clear search or switch era."
-		}) : null
-	] });
-}
-function ArtistPanel({ grouped, total, onPick }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "mb-3 text-xs text-muted",
-			children: [
-				total,
-				" of ",
-				ARTISTS.length,
-				" acts · tap one to lock the lane and roll"
-			]
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "flex flex-col gap-6",
-			children: grouped.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mb-2 flex items-baseline justify-between gap-3",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-display text-lg tracking-wide text-foreground",
-					children: g.label
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-					className: "text-xs text-subtle",
-					children: [
-						g.acts.length,
-						" · ",
-						g.bpm,
-						" BPM"
-					]
-				})]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-				className: "flex flex-wrap gap-2",
-				children: g.acts.map((a) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-					type: "button",
-					onClick: () => onPick(a),
-					className: "inline-flex h-11 items-center rounded-full bg-surface px-3 text-xs text-foreground shadow-border transition-[background-color] duration-150 hover:bg-surface-2",
-					children: [a.name, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "ml-1.5 text-subtle",
-						children: a.country
-					})]
-				}) }, a.id))
-			})] }, g.id))
-		}),
-		total === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "rounded-lg bg-surface p-6 text-sm text-muted shadow-border",
-			children: "No acts in that filter."
-		}) : null
-	] });
-}
-function SavedPanel({ ready, saved, onOpen, onCopy, onRemove }) {
-	if (!ready) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-		className: "text-sm text-muted",
-		children: "Loading saved ideas…"
-	});
-	if (!saved.length) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "rounded-xl bg-surface px-5 py-10 text-center shadow-border",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MicVocal, { className: "mx-auto size-6 text-subtle" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "mt-3 text-sm text-muted",
-			children: "Nothing saved yet. Roll an idea and keep it on this device."
-		})]
-	});
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-		className: "flex flex-col gap-2",
-		children: saved.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-			className: "flex flex-col gap-3 rounded-lg bg-surface p-4 shadow-border sm:flex-row sm:items-center",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-				type: "button",
-				onClick: () => onOpen(item),
-				className: "min-w-0 flex-1 text-left",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "font-display text-lg tracking-wide text-foreground",
-					children: item.title
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-					className: "truncate text-xs text-muted",
-					children: [
-						item.artist.name,
-						" · ",
-						item.vocal.artist,
-						" — ",
-						item.vocal.title,
-						" (",
-						item.vocal.year,
-						")"
-					]
-				})]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex gap-2",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					variant: "outline",
-					size: "sm",
-					onClick: () => onCopy(item),
-					children: "Copy"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					variant: "ghost",
-					size: "sm",
-					onClick: () => onRemove(item),
-					children: "Remove"
-				})]
-			})]
-		}, item.seed))
-	});
-}
-function Home() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
-		className: "min-h-dvh bg-bg text-foreground",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "px-4 py-6 sm:px-6 sm:py-10",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SongsFace, {})
-		})
+	}),
+	component: () => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("html", {
+		lang: "en",
+		className: "antialiased",
+		suppressHydrationWarning: true,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("head", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HeadContent, {}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("body", { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewHostBridge, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PwaRegister, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AuthProvider, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SiteShell, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {}) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toaster, {
+				theme: "dark",
+				position: "bottom-center",
+				toastOptions: { style: {
+					background: "#161412",
+					color: "#e8e2d6",
+					border: "1px solid rgba(232,226,214,0.12)"
+				} }
+			})] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Scripts, {})
+		] })]
+	})
+});
+var $$splitComponentImporter$5 = () => import("./routes-D_bHvotd.mjs");
+var Route$5 = createFileRoute("/")({
+	component: lazyRouteComponent($$splitComponentImporter$5, "component"),
+	head: () => ({ meta: [{ title: "VOCAL SOURCE" }] })
+});
+var $$splitComponentImporter$4 = () => import("./catalog-D-Aia4dS.mjs");
+var Route$4 = createFileRoute("/catalog")({
+	component: lazyRouteComponent($$splitComponentImporter$4, "component"),
+	head: () => ({ meta: [{ title: "Catalog · VOCAL SOURCE" }] })
+});
+var $$splitComponentImporter$3 = () => import("./lanes-1EdFf8H_.mjs");
+var Route$3 = createFileRoute("/lanes")({
+	component: lazyRouteComponent($$splitComponentImporter$3, "component"),
+	head: () => ({ meta: [{ title: "Lanes · VOCAL SOURCE" }] })
+});
+var $$splitComponentImporter$2 = () => import("./saved-CpSFUuAG.mjs");
+var Route$2 = createFileRoute("/saved")({
+	component: lazyRouteComponent($$splitComponentImporter$2, "component"),
+	head: () => ({ meta: [{ title: "Saved · VOCAL SOURCE" }] })
+});
+var $$splitComponentImporter$1 = () => import("./sound-DAHPWoEq.mjs");
+var Route$1 = createFileRoute("/sound")({
+	component: lazyRouteComponent($$splitComponentImporter$1, "component"),
+	head: () => ({ meta: [{ title: "Sound · VOCAL SOURCE" }] })
+});
+var $$splitComponentImporter = () => import("./studio-JhR4nrXj.mjs");
+var Route = createFileRoute("/studio")({
+	component: lazyRouteComponent($$splitComponentImporter, "component"),
+	head: () => ({ meta: [{ title: "Studio · VOCAL SOURCE" }] })
+});
+var rootRouteChildren = {
+	IndexRoute: Route$5.update({
+		id: "/",
+		path: "/",
+		getParentRoute: () => Route$6
+	}),
+	CatalogRoute: Route$4.update({
+		id: "/catalog",
+		path: "/catalog",
+		getParentRoute: () => Route$6
+	}),
+	LanesRoute: Route$3.update({
+		id: "/lanes",
+		path: "/lanes",
+		getParentRoute: () => Route$6
+	}),
+	SavedRoute: Route$2.update({
+		id: "/saved",
+		path: "/saved",
+		getParentRoute: () => Route$6
+	}),
+	SoundRoute: Route$1.update({
+		id: "/sound",
+		path: "/sound",
+		getParentRoute: () => Route$6
+	}),
+	StudioRoute: Route.update({
+		id: "/studio",
+		path: "/studio",
+		getParentRoute: () => Route$6
+	})
+};
+var routeTree = Route$6._addFileChildren(rootRouteChildren)._addFileTypes();
+var router_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
+function getRouter() {
+	return createRouter({
+		routeTree,
+		defaultErrorComponent: AppErrorComponent
 	});
 }
 //#endregion
-export { Home as component };
+export { GENRE_LABEL as _, youLocked as a, searchArtists as b, KEYS as c, VOX_OPTS as d, barsOf as f, GENRES as g, ARTISTS as h, useVs as i, KICK_OPTS as l, youtubeSearch as m, cn as n, BASS_OPTS as o, discogsSearch as p, FEATURED as r, HOOK_OPTS as s, router_exports as t, PHRASE_OPTS as u, VOCALS as v, searchVocals as x, VOCAL_STYLES as y };

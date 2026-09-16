@@ -82,6 +82,19 @@ var createLucideIcon = (iconName, iconNode) => {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var ArrowRight = createLucideIcon("arrow-right", [["path", {
+	d: "M5 12h14",
+	key: "1ays0h"
+}], ["path", {
+	d: "m12 5 7 7-7 7",
+	key: "xquz4c"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var BookmarkCheck = createLucideIcon("bookmark-check", [["path", {
 	d: "m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z",
 	key: "169p4p"
@@ -189,24 +202,6 @@ var LockOpen = createLucideIcon("lock-open", [["rect", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var Lock = createLucideIcon("lock", [["rect", {
-	width: "18",
-	height: "11",
-	x: "3",
-	y: "11",
-	rx: "2",
-	ry: "2",
-	key: "1w4ew1"
-}], ["path", {
-	d: "M7 11V7a5 5 0 0 1 10 0v4",
-	key: "fwvmzm"
-}]]);
-/**
-* @license lucide-react v0.510.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
 var MicVocal = createLucideIcon("mic-vocal", [
 	["path", {
 		d: "m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12",
@@ -300,4 +295,4 @@ var TriangleAlert = createLucideIcon("triangle-alert", [
 	}]
 ]);
 //#endregion
-export { MicVocal as a, ExternalLink as c, Bookmark as d, BookmarkCheck as f, RotateCw as i, Disc3 as l, Settings2 as n, Lock as o, Search as r, LockOpen as s, TriangleAlert as t, Copy as u };
+export { MicVocal as a, Disc3 as c, BookmarkCheck as d, ArrowRight as f, RotateCw as i, Copy as l, Settings2 as n, LockOpen as o, Search as r, ExternalLink as s, TriangleAlert as t, Bookmark as u };

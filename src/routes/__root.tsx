@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { PwaRegister } from "@/components/pwa-register";
+import { SiteShell } from "@/components/site-shell";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 
@@ -48,7 +49,9 @@ export const Route = createRootRoute({
         <PreviewHostBridge />
         <PwaRegister />
         <AuthProvider>
-          <Outlet />
+          <SiteShell>
+            <Outlet />
+          </SiteShell>
           <Toaster
             theme="dark"
             position="bottom-center"
