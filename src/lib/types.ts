@@ -30,6 +30,7 @@ export const KEYS = [
   "E minor",
   "D minor",
   "C minor",
+  "C# minor",
   "B minor",
   "F# minor",
 ] as const;

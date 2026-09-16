@@ -1,17 +1,12 @@
-import { STYLES, totalBars } from "./catalog";
+import { STYLES } from "./catalog";
+import { phraseEdges1 } from "./phrase-edges";
 import { transitionsFor } from "./transitions";
 import type { TrackSession } from "./types";
 
 /** Logic Pro MIDI FX Scripter — paste into Script Editor. */
 export function logicScripter(session: TrackSession): string {
   const style = STYLES[session.style];
-  const total = totalBars(session.style);
-  const fills: number[] = [];
-  const impacts: number[] = [];
-  for (let b = 16; b < total; b += 16) {
-    fills.push(b); // 1-based last bar of the 16? bar 16 is the 16th bar
-    impacts.push(b + 1);
-  }
+  const edges = phraseEdges1(session.style);
   const trans = transitionsFor(session.style)
     .map((t) => `// ${t.at}: ${t.what} — ${t.how}`)
     .join("\n");
@@ -32,8 +27,8 @@ export function logicScripter(session: TrackSession): string {
 var NeedsTimingInfo = true;
 var lastBar = -1;
 
-var FILLS = [${fills.join(", ")}];
-var IMPACTS = [${impacts.filter((n) => n <= total).join(", ")}];
+var FILLS = [${edges.fills.join(", ")}];
+var IMPACTS = [${edges.impacts.join(", ")}];
 
 ${trans}
 
@@ -74,6 +69,7 @@ function ProcessMIDI() {
     hit(38, 112, barStart + 2.5, 0.2);
     hit(38, 116, barStart + 3, 0.15);
     hit(38, 118, barStart + 3.5, 0.15);
+    hit(36, 118, barStart + 3.5, 0.2);
   }
 }
 

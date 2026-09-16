@@ -1,8 +1,10 @@
-import { Bookmark, BookmarkCheck, Copy, Disc3, ExternalLink, RotateCw, Settings2, Unlock } from "lucide-react";
+import { Bookmark, BookmarkCheck, Copy, Disc3, Download, ExternalLink, RotateCw, Settings2, Unlock } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { GENRE_LABEL } from "@/lib/hs-catalog";
 import { barsOf, discogsSearch, youtubeSearch, type Idea, type Phrase, type PhraseKind } from "@/lib/hs-ideas";
+import { downloadMacPack } from "@/lib/mac-pack";
+import { sessionFromIdea } from "@/lib/session-from-idea";
 import { useVs, youLocked } from "@/lib/vs-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -175,6 +177,18 @@ export function IdeaCard({ idea }: { idea: Idea }) {
         </ol>
 
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+          <Button
+            className="flex-1"
+            onClick={() => {
+              downloadMacPack(sessionFromIdea(idea));
+              toast.success("Saved Logic Mac pack");
+            }}
+          >
+            <Download className="size-4" />
+            Download Logic Mac pack
+          </Button>
+        </div>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
           <Button asChild variant="secondary" className="flex-1">
             <a href={youtubeSearch(idea.search)} target="_blank" rel="noreferrer">
               <ExternalLink className="size-4" />

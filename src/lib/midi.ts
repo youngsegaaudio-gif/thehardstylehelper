@@ -87,7 +87,14 @@ type MidiOpts = {
   bpm: number;
   key: MusicalKey;
   bars?: number;
+  /** 0-based last bars of each phrase */
+  fillBars?: number[];
+  /** 0-based first bars of the next phrase */
+  impactBars?: number[];
+  /** 0-based bars that get a snare roll (build tails) */
+  rollBars?: number[];
 };
+
 
 function fillKind(kind: MidiKind, opts: MidiOpts): MidiEvent[] {
   const bars = opts.bars ?? 16;
@@ -163,43 +170,50 @@ function fillKind(kind: MidiKind, opts: MidiOpts): MidiEvent[] {
   }
 
   if (kind === "snare-roll") {
-    for (let b = 0; b < bars; b++) {
+    const rolls =
+      opts.rollBars && opts.rollBars.length
+        ? opts.rollBars
+        : Array.from({ length: bars }, (_, i) => i);
+    for (let i = 0; i < rolls.length; i++) {
+      const b = rolls[i];
       let step = eighth;
-      if (b >= 8 && b < 12) step = sixteenth;
-      if (b >= 12 && b < 14) step = sixteenth;
-      if (b >= 14) step = sixteenth / 2;
+      if (i >= rolls.length - 4) step = sixteenth;
+      if (i >= rolls.length - 2) step = sixteenth / 2;
       const hits = Math.round(bar / step);
-      for (let i = 0; i < hits; i++) {
-        const vel = Math.min(120, 70 + b * 2 + (i % 2 === 0 ? 8 : 0));
-        addNote(events, b * bar + i * step, step - 1, 38, vel);
+      for (let h = 0; h < hits; h++) {
+        const vel = Math.min(120, 70 + i * 3 + (h % 2 === 0 ? 8 : 0));
+        addNote(events, b * bar + h * step, step - 1, 38, vel);
       }
     }
   }
 
   if (kind === "extra-kick") {
-    for (let b = 0; b < bars; b++) {
-      if ((b + 1) % 4 === 0) {
-        addNote(events, b * bar + beat * 3 + eighth, eighth - 2, 36, 118);
-      }
-      if (b % 16 === 0) {
-        addNote(events, b * bar, beat, 37, 120);
-      }
+    const fills = opts.fillBars?.length
+      ? opts.fillBars
+      : Array.from({ length: bars }, (_, b) => b).filter((b) => (b + 1) % 4 === 0);
+    const impacts = opts.impactBars?.length
+      ? opts.impactBars
+      : Array.from({ length: bars }, (_, b) => b).filter((b) => b % 16 === 0);
+    for (const b of fills) {
+      addNote(events, b * bar + beat * 3 + eighth, eighth - 2, 36, 118);
+    }
+    for (const b of impacts) {
+      addNote(events, b * bar, beat, 37, 120);
+      addNote(events, b * bar, beat * 2, 49, 100);
     }
   }
 
   if (kind === "pvc-fill") {
-    for (let b = 0; b < bars; b++) {
-      if ((b + 1) % 16 === 0) {
-        for (let i = 0; i < 8; i++) {
-          addNote(events, b * bar + beat * 2 + i * sixteenth, sixteenth - 1, 36, 100 + i);
-        }
-      } else if ((b + 1) % 8 === 0) {
-        for (let i = 0; i < 4; i++) {
-          addNote(events, b * bar + beat * 2 + i * eighth, eighth - 2, 36, 104 + i * 2);
-        }
+    const fills = opts.fillBars?.length
+      ? opts.fillBars
+      : Array.from({ length: bars }, (_, b) => b).filter((b) => (b + 1) % 8 === 0);
+    for (const b of fills) {
+      for (let i = 0; i < 8; i++) {
+        addNote(events, b * bar + beat * 2 + i * sixteenth, sixteenth - 1, 36, 100 + i);
       }
     }
   }
+
 
   return events;
 }

@@ -8,6 +8,7 @@ import { buildCoach, markerList } from "@/lib/coach-engine";
 import { kicksFor } from "@/lib/kicks";
 import { downloadMacPack } from "@/lib/mac-pack";
 import { downloadMidi, makeMidi, makeSongMidi, type MidiKind } from "@/lib/midi";
+import { phraseEdges } from "@/lib/phrase-edges";
 import { downloadText, notesDocument, slugName } from "@/lib/session-export";
 import { logicScripter } from "@/lib/scripter";
 import { useTrack, type CoachTab } from "@/lib/store";
@@ -427,13 +428,18 @@ function MidiExport() {
   ];
 
   const slug = slugName(session.name);
+  const edges = phraseEdges(session.style);
+  const midiOpts = {
+    bpm: session.bpm,
+    key: session.key,
+    bars: edges.total,
+    fillBars: edges.fillBars,
+    impactBars: edges.impactBars,
+    rollBars: edges.rollBars,
+  };
 
   function save(kind: MidiKind) {
-    const bytes = makeMidi(kind, {
-      bpm: session.bpm,
-      key: session.key,
-      bars: 16,
-    });
+    const bytes = makeMidi(kind, midiOpts);
     downloadMidi(bytes, `${slug}-${kind}.mid`);
     toast.success(`Saved ${kind}.mid — drop it onto a Logic track`);
   }
@@ -444,13 +450,11 @@ function MidiExport() {
       label: m.label,
     }));
     const bytes = makeSongMidi({
-      bpm: session.bpm,
-      key: session.key,
-      bars: 16,
+      ...midiOpts,
       markers,
     });
     downloadMidi(bytes, `${slug}-logic.mid`);
-    toast.success("Saved 16-bar Logic MIDI — drag onto arrange");
+    toast.success(`Saved ${edges.total}-bar Logic MIDI — drag onto arrange`);
   }
 
   return (
@@ -460,29 +464,22 @@ function MidiExport() {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <p className="text-sm leading-relaxed text-muted text-pretty">
-          Tempo-stamped MIDI. The Logic file is kick, clap, hats, chords, lead and bass as
-          separate tracks — drag onto the arrange page. Extra kick and PVC fill are the
-          extras. Chords are in {session.key}.
+          One zip: Scripter, full {edges.total}-bar MIDI with markers, extra kicks
+          and fills on phrase edges, notes, mix. Not an Audio Unit — paste the
+          script. Chords are in {session.key}.
         </p>
-        <Button asChild>
-          <a href="/HELPER-Mac-Logic-Plugin.zip" download="HELPER-Mac-Logic-Plugin.zip">
-            <Download className="size-4" />
-            Download Mac plug-in
-          </a>
-        </Button>
         <Button
-          variant="secondary"
           onClick={() => {
             downloadMacPack(session);
-            toast.success("Saved session pack");
+            toast.success("Saved Logic Mac pack");
           }}
         >
           <Download className="size-4" />
-          This track’s MIDI pack
+          Download Logic Mac pack
         </Button>
         <Button variant="secondary" onClick={saveSong}>
           <Download className="size-4" />
-          16-bar Logic MIDI
+          Full song MIDI only
         </Button>
         <Button
           variant="secondary"

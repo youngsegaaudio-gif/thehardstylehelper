@@ -625,6 +625,11 @@ export const KEY_NOTES: Record<MusicalKey, { root: number; scale: number[]; chor
       scale: [48, 50, 51, 53, 55, 56, 58, 60],
       chords: ["Cm", "Ab", "Eb", "Bb"],
     },
+    "C# minor": {
+      root: 49,
+      scale: [49, 51, 52, 54, 56, 57, 59, 61],
+      chords: ["C#m", "A", "E", "B"],
+    },
     "B minor": {
       root: 59,
       scale: [59, 61, 62, 64, 66, 67, 69, 71],

@@ -720,7 +720,7 @@ function logicMoves(session: TrackSession, kind: string): LogicMove[] {
       steps: [
         `Set project tempo to ${bpm}. Time signature 4/4. Key ${session.key}.`,
         "Create markers from HELPER's marker list (copy, then Marker List in Logic).",
-        "Drop the 16-bar multi-track MIDI onto the arrange page — kick, clap, hats, chords, lead, bass land as separate regions.",
+        "Drop the full-song multi-track MIDI onto the arrange page — kick, clap, hats, chords, lead, bass land as separate regions. Markers sit on phrase edges.",
         "Cycle a 16-bar loop around the playhead. Write inside the loop, then duplicate.",
         "Color: kick red, bass orange, leads yellow, vox green, FX blue — whatever you'll remember at 3am.",
       ],
@@ -776,7 +776,7 @@ function logicMoves(session: TrackSession, kind: string): LogicMove[] {
       title: "Drop MIDI onto Logic",
       steps: [
         "Download the Mac Logic pack (zip): Scripter plug-in, MIDI, PVC kicks, transitions, markers.",
-        "Drag the 16-bar Logic MIDI onto arrange — tempo is embedded, tracks split out.",
+        "Drag the full-song Logic MIDI onto arrange — tempo is embedded, tracks split out, markers on phrase edges.",
         "Paste HELPER-Scripter.js into MIDI FX → Scripter on an extra-kick sampler track.",
         "HELPER is not an Audio Unit. It writes MIDI, Scripter, and chains you drop in.",
       ],
