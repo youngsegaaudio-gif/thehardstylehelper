@@ -3,3 +3,12 @@ node_modules/
 .github_repo
 .env
 .env.*
+*.pem
+*.p12
+*.key
+secrets/
+.myclaw/
+config.json
+license-keys.txt
+dist/
+release/
