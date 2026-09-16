@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HARDSTYLE HELPER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0b;--s:#161412;--s2:#1c1a17;--fg:#e8e2d6;--m:#8a8478;--b:rgba(232,226,214,.12)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 Nunito,sans-serif}
+button,input,select,textarea{font:inherit;color:var(--fg)}
+button{cursor:pointer}
+.w{max-width:38rem;margin:0 auto;padding:1.1rem}
+.p{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:1.15rem}
+h1{font-family:Bungee,Impact,sans-serif;font-size:1.4rem;margin:0;line-height:1.15}
+.m{color:var(--m);font-size:.8rem}
+.meta{font-family:ui-monospace,monospace;font-size:.75rem;color:var(--m)}
+input,select,textarea{width:100%;margin-top:.45rem;padding:.65rem .75rem;border:1px solid var(--b);border-radius:8px;background:var(--s2)}
+textarea{min-height:4.2rem;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.65rem}
+.chips.sc{max-height:8.5rem;overflow:auto}
+.chips button,.icon{height:2.15rem;padding:0 .7rem;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:.78rem}
+.chips button.on,.icon.on{background:var(--fg);color:var(--bg);border-color:transparent}
+.rowbtns{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem}
+.icon{width:2.4rem;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.go{width:100%;height:2.6rem;margin-top:.9rem;border:0;border-radius:8px;background:var(--fg);color:var(--bg);font-weight:700}
+.ghost{background:var(--s2);color:var(--fg);border:1px solid var(--b)}
+.bar{font-family:Bungee,Impact,sans-serif;font-size:3.1rem;margin:0;line-height:.95}
+.sec{font-family:Bungee,Impact,sans-serif;font-size:1.1rem;margin:0}
+.row{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-top:1rem}
+.strip{display:flex;height:2.35rem;overflow:hidden;border-radius:8px;border:1px solid var(--b);margin-top:.7rem}
+.strip button{border:0;min-width:0;opacity:.45}
+.strip button.on{opacity:1}
+.intro{background:#1a1815}.break{background:#24211c}.build{background:#2e2a24}.drop{background:#3a352d}.outro{background:#1d1b18}
+ol,ul{list-style:none;padding:0;margin:.55rem 0 0}
+.box{margin-top:.85rem;background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:.9rem}
+.lab{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin:0 0 .4rem}
+.pan{position:relative;height:.45rem;border-radius:99px;background:#26231f;margin:.35rem 0}
+.dot{position:absolute;top:50%;width:.7rem;height:.7rem;border-radius:50%;background:var(--fg);transform:translate(-50%,-50%)}
+</style>
+</head>
+<body>
+<div class="w"><div class="p" id="app"></div></div>
+<script>
+const A=[
+["ar-gang","AR Gang","ar-gang",152,"G minor"],["rebelion","Rebelion","ar-gang",155,"E minor"],["adjuzt","Adjuzt","ar-gang",154,"G minor"],
+["so-juice","So Juice","ar-gang",155,"E minor"],["aversion","Aversion","ar-gang",154,"G minor"],["the-purge","The Purge","ar-gang",152,"E minor"],
+["deezl","Deezl","ar-gang",155,"G minor"],["riot-shift","Riot Shift","ar-gang",154,"E minor"],["anderex","Anderex","ar-gang",155,"E minor"],
+["the-straikerz","The Straikerz","ar-gang",155,"G minor"],["lil-texas","Lil Texas","lil-texas",160,"A minor"],["vertile","Vertile","lil-texas",160,"A minor"],
+["rooler","Rooler","raw",160,"E minor"],["sickmode","Sickmode","raw",158,"G minor"],["rejecta","Rejecta","raw",155,"G minor"],
+["d-sturb","D-Sturb","raw",155,"E minor"],["warface","Warface","raw",155,"E minor"],["mutilator","Mutilator","raw",160,"E minor"],
+["radical-redemption","Radical Redemption","raw",155,"E minor"],["adaro","Adaro","raw",150,"G minor"],["zatox","Zatox","raw",150,"E minor"],
+["hard-driver","Hard Driver","raw",155,"G minor"],["e-force","E-Force","raw",150,"G minor"],["crypsis","Crypsis","raw",150,"E minor"],
+["delete","Delete","raw",155,"E minor"],["headhunterz","Headhunterz","euphoric",150,"A minor"],["wildstylez","Wildstylez","euphoric",150,"A minor"],
+["brennan-heart","Brennan Heart","euphoric",150,"A minor"],["coone","Coone","euphoric",150,"A minor"],["da-tweekaz","Da Tweekaz","euphoric",150,"A minor"],
+["sub-zero-project","Sub Zero Project","euphoric",150,"G minor"],["phuture-noize","Phuture Noize","euphoric",150,"A minor"],
+["atmozfears","Atmozfears","euphoric",150,"A minor"],["ran-d","Ran-D","euphoric",150,"A minor"],["sound-rush","Sound Rush","euphoric",150,"A minor"],
+["wasted-penguinz","Wasted Penguinz","euphoric",150,"A minor"],["keltek","Keltek","euphoric",150,"A minor"],["jdx","JDX","euphoric",150,"A minor"],
+["technoboy","Technoboy","euphoric",150,"A minor"],["darren-styles","Darren Styles","uk",170,"A minor"],["s3rl","S3RL","uk",170,"F minor"],
+["hixxy","Hixxy","uk",170,"A minor"],["gammer","Gammer","uk",170,"A minor"],["re-style","Re-Style","uk",170,"A minor"],
+["lady-faith","Lady Faith","uk",170,"A minor"],["angerfist","Angerfist","hardcore",190,"E minor"],["sefa","Sefa","hardcore",200,"A minor"],
+["dr-peacock","Dr Peacock","hardcore",200,"A minor"],["miss-k8","Miss K8","hardcore",180,"E minor"],["neophyte","Neophyte","hardcore",175,"E minor"],
+["partyraiser","Partyraiser","hardcore",180,"E minor"],["korsakoff","Korsakoff","hardcore",180,"E minor"],["d-fence","D-Fence","hardcore",200,"E minor"]
+];
+const SCH=[["all","All"],["ar-gang","AR Gang"],["lil-texas","Lil Texas"],["raw","Raw"],["euphoric","Euphoric"],["uk","UK"],["hardcore","Hardcore"]];
+const KEYS=["A minor","G minor","F minor","E minor","D minor","C minor","B minor","F# minor"];
+const LAYERS=["kick","clap","hats","reverse-bass","sub","pad","chords","lead","screech","vocal","fx"];
+const IDEAS={
+"ar-gang":["Spoken line in the break, screech as the only drop hook.","Kick + reverse bass first. No melody until drop 2.","Empty 8 bars then a one-shot screech."],
+raw:["Kick design is the track. Stab instead of climax saw.","Dark pad break, then a wall. Second drop = extra crunch.","Industrial FX glue. Leave holes for the kick."],
+"lil-texas":["Chopped vocal as the rhythm. Happy lead, hard kick.","Hook in 8 bars. Drop hits immediately.","Pitched vox offbeats. Bounce hats."],
+euphoric:["Break melody becomes the drop lead. Reverse bass locked.","Longer break, same 32-bar drop.","Climax saw, kick still wins the center."],
+uk:["4-bar piano riff first. Offbeat bass, not reverse bass.","Vocal hook is the song. Drop restates it.","Snare build last 4 of the 16."],
+hardcore:["Kick wall. Stab. Shout. Stop writing.","Short map. Distortion before EQ.","Hoover or nothing. No pretty break."]
+};
+function rng(seed){let s=seed>>>0||1;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}}
+function pick(r,xs){return xs[Math.floor(r()*xs.length)]}
+function gen(school,seed){
+  const r=rng(seed);
+  let intro,brk,build,drop,outro,second;
+  if(school==="hardcore"){intro=pick(r,[8,16]);brk=pick(r,[8,16]);build=pick(r,[8,16]);drop=pick(r,[16,32]);outro=pick(r,[8,16]);second=r()>0.4}
+  else if(school==="lil-texas"||school==="uk"){intro=pick(r,[8,16]);brk=pick(r,[16,24,32]);build=pick(r,[8,16]);drop=32;outro=pick(r,[8,16]);second=r()>0.25}
+  else{intro=pick(r,[16,16,32]);brk=pick(r,[16,32,32]);build=pick(r,[8,16,16]);drop=32;outro=pick(r,[8,16]);second=r()>0.15}
+  const raw=school==="ar-gang"||school==="raw", happy=school==="lil-texas"||school==="uk";
+  const L={intro:raw?"Kick intro":happy?"Hook / drums in":school==="hardcore"?"Kick wall":"Groove in",
+    break:raw?"Dark break":happy?"Hook break":school==="hardcore"?"Stab break":"Melody break",
+    build:happy?"Snare build":raw?"Noise build":school==="hardcore"?"Fill":"Snare build",
+    drop:raw?"Raw drop":happy?"Bounce drop":school==="hardcore"?"Peak":"Climax drop"};
+  const sec=[]; let b=0;
+  const push=(kind,label,bars)=>{sec.push({kind,label,start:b,bars});b+=bars};
+  push("intro",L.intro,intro); if(r()>0.55&&intro<32) push("intro","Groove in",16);
+  push("break",L.break,brk); push("build",L.build+" 1",build); push("drop",L.drop+" 1",drop);
+  if(second){push("break",L.break+" 2",pick(r,[16,brk]));push("build",L.build+" 2",pick(r,[8,build]));push("drop",L.drop+" 2",drop)}
+  push("outro","Outro",outro);
+  const fx=[];
+  sec.forEach((s,i)=>{const end=s.start+s.bars,next=sec[i+1];
+    if(s.kind==="intro"&&next&&next.kind!=="intro") fx.push({bar:end-1,name:"Reverse crash",len:"1 bar",how:"Reverse a crash into the next section. Center."});
+    if(s.kind==="break") fx.push({bar:s.start,name:raw?"Atmosphere swell":"Pad / vox throw",len:"2 bars",how:"Wide. Duck under the kick if it is still in."});
+    if(s.kind==="build"){fx.push({bar:s.start,name:"White noise rise",len:s.bars+" bars",how:raw?"Noise + reverse kick last bar.":"Snare last 4 + noise under."});
+      fx.push({bar:end-Math.min(4,s.bars),name:raw?"Fill extras":"Snare roll",len:Math.min(4,s.bars)+" bars",how:"1/8 then 1/16. Cut on the drop downbeat."})}
+    if(s.kind==="drop") fx.push({bar:s.start,name:"Impact + crash",len:"1 hit",how:"Kick dead center. Crash slightly off. Pickup extra last 16th."});
+    if(s.kind==="outro") fx.push({bar:s.start,name:"Strip FX",len:s.bars+" bars",how:"Kill the rise. Kick + one motif out."});
+  });
+  return {seed,sec,fx,total:b};
+}
+function studio(a,seed,bpm,key,layers,you){
+  const r=rng(seed^0x9e3779b9), s=a[2], raw=s==="ar-gang"||s==="raw", happy=s==="lil-texas"||s==="uk", hc=s==="hardcore", uk=s==="uk";
+  const title=(you.track||"Untitled")+" · "+a[1]+" · "+bpm+" · "+key;
+  const idea=title+". "+pick(r,IDEAS[s]||IDEAS.raw)+(you.ref?" Ref: "+you.ref+".":"");
+  const missing=LAYERS.filter(x=>!layers.includes(x));
+  const next= raw && !layers.includes("kick") ? "Program the kick first. Nothing else until it punches."
+    : raw && !layers.includes("reverse-bass") ? "Lock Serum reverse bass to the kick MIDI. Sidechain Pro-C."
+    : raw && !layers.includes("screech") ? "Drop hook is a short screech, not a pretty saw."
+    : happy && !layers.includes("vocal") ? "Chop the hook before you pretty the kick."
+    : hc && !layers.includes("kick") ? "Kick wall first. Distortion before EQ."
+    : !layers.includes("kick") ? "You are arranging with no kick. Stop and finish Kick 3."
+    : you.hook==="screech" && !layers.includes("screech") ? "Your hook is a screech. Build that before extra leads."
+    : you.hook==="vox" && !layers.includes("vocal") ? "Your hook is vocal. Chop it before the drop lead."
+    : you.hook==="piano" && !layers.includes("chords") ? "Piano riff first. 4 bars. Then the kick."
+    : "Work the current section. Add only what this phrase is missing: "+(missing.slice(0,3).join(", ")||"glue FX");
+  const kickHow= you.kick==="pvc" ? "Peak PVC stack: Kick 3 body + click extra + clip. Gate the tail."
+    : you.kick==="musical" ? "Kick 3 pitched to "+key+". Less clip, more tone."
+    : "Kick 3 raw. Distortion after EQ. Clip last.";
+  const bassHow= you.bass==="offbeat" ? "Serum offbeat bass. Not reverse. Sidechain Pro-C from kick."
+    : you.bass==="none" ? "No bass bed. Sub extra on the kick only."
+    : "Serum reverse bass, same MIDI as the kick. Pro-C sc from kick.";
+  const hookHow= you.hook==="saw" ? "Serum supersaw. Unison 5–7. HP 180 Hz."
+    : you.hook==="piano" ? "Logic Sampler / Serum keys. 4-bar riff in "+key+"."
+    : you.hook==="vox" ? "Chopped vox is the hook. Pitch in Logic. Delay throw in the break only."
+    : you.hook==="stab" ? "Short stab on 1. Serum or ES2. No tail."
+    : "Short screech. Serum noise+saw, 80–180 ms.";
+  const voxHow= you.vox==="shout" ? "One line, center, clip. No pretty stack."
+    : you.vox==="sung" ? "Sung hook in the break. Drop restates a chop of it."
+    : you.vox==="chop" ? "Chops as rhythm. Offbeats. Lock to center in the drop."
+    : "No lead vox. Atmosphere only.";
+  const has=n=>you.plugs.includes(n);
+  const dist=has("Kilohearts")?"Kilohearts Distortion":"Logic Overdrive";
+  const eq=has("FabFilter")?"FabFilter Pro-Q":"Logic Channel EQ";
+  const comp=has("FabFilter")?"FabFilter Pro-C":"Logic Compressor";
+  const lim=has("iZotope")?"iZotope Ozone Maximizer last, or skip it.":"Logic Adaptive Limiter, 0.3–1 dB GR.";
+  const synth=has("Serum")?"Serum":has("Vital")?"Vital":"Logic Retro Synth";
+  const build=raw?[
+    "Kick 3 — body, click, clip. Nothing else until it punches.",
+    "Serum reverse bass, same MIDI as the kick, sidechain Pro-C.",
+    "Markers from this map. Mute everything that isn't kick+bass.",
+    "Break: atmosphere + one motif. No climax saw.",
+    "Drop hook: short screech (Serum, 80–180 ms).",
+    "FX last. Mix. Then master."
+  ]:happy?[
+    "Write the 4-bar hook (piano or vox) before the kick is pretty.",
+    "Kick 3 at "+bpm+". Offbeat bass in Serum, not reverse bass.",
+    "Markers. Drop restates the hook.",
+    "Hats/clap busier than hardstyle. Bounce.",
+    "Snare roll last 4 of each build.",
+    "Mix. Master quieter than raw — leave the vocal."
+  ]:hc?[
+    "Kick 3 + Kilohearts Distortion until it hurts. Gate the tail.",
+    "Stab or hoover. That's the hook.",
+    "Short map. No 32-bar tease.",
+    "Shout vox one-liner.",
+    "Industrial FX, then stop adding.",
+    "Clip hard. Master last."
+  ]:[
+    "Break melody in Serum first (the drop will copy it).",
+    "Kick 3 + reverse bass locked to 1.",
+    "Markers. 32-bar phrases.",
+    "Build: white noise + snare last 4.",
+    "Climax lead = break melody, unison 7, HP 180 Hz.",
+    "Mix around the kick. Master with Ozone / Adaptive Limiter."
+  ];
+  const instruments=[
+    ["Kick",kickHow],
+    ["Bass",bassHow],
+    ["Hook",hookHow],
+    ["Vocal",voxHow],
+    ["Hats","Slightly right. No reverb wash."]
+  ];
+  const mix=[
+    ["Kick","Kick 3 → "+eq+" → "+dist+" → clip → "+comp+" (4:1, atk 8–20 ms)."],
+    ["Bass",synth+" → "+eq+" (HP 30, LP 180) → "+comp+" sidechain from kick. Mono."],
+    ["Leads",synth+" → "+eq+" scoop 250–400 Hz → delay on send, not insert."],
+    ["Vox",eq+" HP 120 → "+comp+" → delay send. Center."],
+    ["FX","Wide. HP 200 Hz. Never in the kick's 50–100 Hz."]
+  ];
+  const master=[
+    "Bus: "+eq+" — tiny dip 300 Hz, air +1 dB at 12 kHz if it needs it.",
+    lim,
+    "Logic Adaptive Limiter on Stereo Out if Ozone is off. 0.3–1 dB GR.",
+    you.ref ? "Reference "+you.ref+" in "+key+". Match punch first." : "Reference a "+a[1]+" track in "+key+". Match punch first."
+  ];
+  const serum= raw?[
+    "Osc A saw, Osc B noise. Filter bandpass 1.2–3 kHz.",
+    "Env 1 amp: atk 0, dec 120 ms, sus 0. Env 2 filter same, shorter.",
+    "No huge unison. Distortion after the filter. HP 180 Hz on the way out."
+  ]:happy?[
+    "Osc A+B saw, unison 5–7, detune 0.2.",
+    "Amp env bounce: atk 8 ms, dec 180, sus 20.",
+    "Chorus + short delay send. HP 160 Hz so the kick keeps the middle."
+  ]:[
+    "2–3 saws, unison 7 for climax only.",
+    "Filter env opens on the build. Automate cutoff, not 20 macros.",
+    "EQ scoop 300 Hz. Sidechain light to the kick."
+  ];
+  const kicks= raw||hc||s==="ar-gang"?[
+    ["Peak / main","Every beat. Kick 3 body. Gate before the next hat."],
+    ["Click extra","20–40 ms. HP 2 kHz. 6–8 dB under the peak."],
+    ["Fill extra","Last 2 beats of a 16. 1/8 then 1/16. HP 60 Hz."],
+    ["Impact","Bar 1 of a drop. Longer one-shot + crash."]
+  ]:[
+    ["Main kick","Every beat. Musical pitch."],
+    ["Click extra","Keep the punch without extra low end."],
+    ["Reverse cym / kick","1–2 bars before the drop, not 8."]
+  ];
+  const speakers= raw?[
+    ["Kick",0,"Dead center. Never pan a hard-dance kick."],
+    ["Reverse bass",0,"Center with the kick. Check in mono."],
+    ["Screech",-12,"Just left of center, short."],
+    ["Hats",8,"Slightly right."],
+    ["FX",70,"Widest thing. Sweeps can move."]
+  ]:[
+    ["Kick",0,"Dead center."],
+    ["Bass / sub",0,"Mono low end."],
+    ["Lead",0,"Wide unison, still even."],
+    ["Hats",18,"A bit right."],
+    ["FX",70,"Edges of the speakers."]
+  ];
+  return {idea,next,build,instruments,mix,master,serum,kicks,speakers};
+}
+
+const PLUGS=["Kick 3","Serum","Vital","FabFilter","Kilohearts","iZotope"];
+const YOU_DEF={track:"",kick:"raw",bass:"reverse",hook:"screech",vox:"chop",plugs:["Kick 3","Serum","FabFilter","Kilohearts","iZotope"],ref:""};
+function loadYou(){
+  try{return Object.assign({},YOU_DEF,JSON.parse(localStorage.getItem("hh-you")||"{}"))}catch(e){return Object.assign({},YOU_DEF)}
+}
+let school="all", q="", id="ar-gang", bar=0, bpm=152, key="G minor", notes="", layers=["kick"],
+    playing=false, songName="", heard=null, live=null, pack=null, timer=null, you=loadYou();
+const audio=new Audio();
+function persist(){try{localStorage.setItem("hh-you",JSON.stringify(you))}catch(e){}}
+function artist(){return A.find(x=>x[0]===id)||A[0]}
+function newSeed(){return (Date.now()^Math.floor(Math.random()*1e9))>>>0}
+function secAt(){return live.sec.find(s=>bar>=s.start&&bar<s.start+s.bars)||live.sec[0]}
+function stamp(){const t=bar*(60/bpm)*4; const m=Math.floor(t/60), s=Math.floor(t%60); return m+":"+String(s).padStart(2,"0")}
+function refreshPack(){pack=studio(artist(), live.seed, bpm, key, layers, you)}
+function regen(){const a=artist(); live=gen(a[2], newSeed()); bar=0; refreshPack(); render()}
+function applyArtist(){const a=artist(); bpm=a[3]; key=a[4]; layers=["kick"]; regen()}
+function tick(){
+  if(!playing) return;
+  if(songName && !audio.paused){
+    bar=Math.max(0, Math.min(live.total-1, Math.floor(audio.currentTime / ((60/bpm)*4))));
+    render(); return;
+  }
+  if(bar+1>=live.total){playing=false; render(); return}
+  bar++; render();
+}
+function playToggle(){
+  playing=!playing;
+  if(playing){
+    if(songName) audio.play();
+    clearInterval(timer);
+    timer=setInterval(tick, (60/bpm)*4*1000);
+  } else { audio.pause(); clearInterval(timer); }
+  render();
+}
+function jump(d){
+  bar=Math.max(0,Math.min(live.total-1,bar+d));
+  if(songName) audio.currentTime=bar*(60/bpm)*4;
+  render();
+}
+function onSong(file){
+  songName=file.name;
+  audio.src=URL.createObjectURL(file);
+  audio.ontimeupdate=()=>{bar=Math.max(0,Math.min(live.total-1, Math.floor(audio.currentTime/((60/bpm)*4)))); render()};
+  audio.onended=()=>{playing=false; render()};
+  playing=true; audio.play();
+  clearInterval(timer);
+  render();
+}
+function dl(name, blob){
+  const x=document.createElement("a"); x.href=URL.createObjectURL(blob); x.download=name; x.click();
+  setTimeout(()=>URL.revokeObjectURL(x.href), 1500);
+}
+function fname(ext){return "HELPER-"+artist()[0]+"-"+live.seed+"."+ext}
+function markerRows(){
+  const rows=[];
+  live.sec.forEach(s=>rows.push({bar:s.start, name:s.label, bars:s.bars, kind:"section"}));
+  live.fx.forEach(f=>rows.push({bar:f.bar, name:"FX "+f.name, bars:0, kind:"fx"}));
+  rows.sort((a,b)=>a.bar-b.bar || (a.kind==="section"?-1:1));
+  return rows;
+}
+function save(){
+  const a=artist();
+  const lines=["HARDSTYLE HELPER + BARLINE notes. Not an Audio Unit.",
+    (you.track||"Untitled")+" · "+a[1]+" · "+bpm+" BPM · "+key+" · seed "+live.seed,
+    "Kick "+you.kick+" · bass "+you.bass+" · hook "+you.hook+" · vox "+you.vox,
+    "Plugs: "+you.plugs.join(", "),"Ref: "+(you.ref||"—"),
+    "Layers: "+layers.join(", "),"Notes: "+(notes||"—"),"","DO THIS NOW",pack.next,"","IDEA",pack.idea,"","BUILD",
+    ...pack.build.map((s,i)=>(i+1)+". "+s),"","INSTRUMENTS",...pack.instruments.map(x=>x[0]+": "+x[1]),
+    "","MIX",...pack.mix.map(x=>x[0]+": "+x[1]),"","MASTER",...pack.master.map(x=>"- "+x),
+    "","SERUM",...pack.serum.map(x=>"- "+x),"","KICKS",...pack.kicks.map(x=>x[0]+": "+x[1]),
+    "","ARRANGEMENT MARKERS (Logic: Arrangement track, add marker at each bar)",
+    ...live.sec.map(s=>"Bar "+(s.start+1)+"  "+s.label+"  ("+s.bars+" bars)"),
+    "","FX MARKERS",...live.fx.map(f=>"Bar "+(f.bar+1)+"  "+f.name+"  "+f.how),
+    "","Logic: File → Import → MIDI the .mid for markers. Or type these on the Arrangement track.",
+    "Then File → Save as Template."];
+  dl(fname("txt"), new Blob([lines.join("\n")],{type:"text/plain"}));
+}
+function saveMarkersTxt(){
+  const lines=["LOGIC ARRANGEMENT MARKERS",
+    artist()[1]+" · "+bpm+" BPM · "+key+" · "+live.total+" bars",
+    "Set project BPM to "+bpm+". 4/4. Bar 1 is 1.1.1.1.",
+    "Arrangement track → add a marker at each line.",
+    "",
+    "BAR\tNAME\tLENGTH",
+    ...live.sec.map(s=>(s.start+1)+"\t"+s.label+"\t"+s.bars),
+    "","FX CUES","BAR\tNAME",
+    ...live.fx.map(f=>(f.bar+1)+"\t"+f.name)];
+  dl(fname("markers.txt"), new Blob([lines.join("\n")],{type:"text/plain"}));
+}
+function vlq(n){
+  const out=[n & 0x7f];
+  n >>= 7;
+  while(n>0){ out.unshift((n & 0x7f) | 0x80); n >>= 7; }
+  return out;
+}
+function midiMarkers(){
+  const ppq=480, tpb=ppq*4;
+  const us=Math.round(60000000/bpm);
+  const ev=[];
+  const push=(delta, bytes)=>{ ev.push(...vlq(delta), ...bytes); };
+  push(0, [0xFF,0x51,0x03,(us>>16)&255,(us>>8)&255,us&255]);
+  push(0, [0xFF,0x58,0x04,0x04,0x02,0x18,0x08]);
+  let last=0;
+  markerRows().forEach(m=>{
+    const tick=m.bar*tpb;
+    const name=m.name.slice(0,48);
+    const enc=[];
+    for(let i=0;i<name.length;i++) enc.push(name.charCodeAt(i)&127);
+    push(tick-last, [0xFF,0x06,enc.length,...enc]);
+    last=tick;
+  });
+  push(Math.max(0, live.total*tpb-last), [0xFF,0x2F,0x00]);
+  const track=[0x4d,0x54,0x72,0x6b, (ev.length>>24)&255,(ev.length>>16)&255,(ev.length>>8)&255,ev.length&255, ...ev];
+  const hdr=[0x4d,0x54,0x68,0x64,0,0,0,6, 0,0, 0,1, (ppq>>8)&255, ppq&255];
+  return new Uint8Array([...hdr,...track]);
+}
+function saveMidi(){
+  dl(fname("mid"), new Blob([midiMarkers()],{type:"audio/midi"}));
+}
+function render(){
+  if(!live){const a=artist(); live=gen(a[2], newSeed()); refreshPack()}
+  const a=artist();
+  const list=A.filter(x=>(school==="all"||x[2]===school)&&(!q||x[1].toLowerCase().includes(q.toLowerCase())));
+  const cur=secAt();
+  const now=live.fx.filter(f=>Math.abs(f.bar-bar)<=2);
+  const phrase=bar-cur.start+1;
+  document.getElementById("app").innerHTML=`
+    <h1>HARDSTYLE HELPER</h1>
+    <p class="m">BARLINE coach + artist maps. Customise. Mix with your plugs.</p>
+    <p class="meta" style="margin-top:.35rem">${stamp()} · ${songName?songName:"drop a bounce"}</p>
+    <div class="rowbtns">
+      <button class="icon" id="play">${playing?"❚❚":"▶"}</button>
+      <button class="icon" id="back">‹</button>
+      <button class="icon" id="fwd">›</button>
+      <button class="icon" id="up">File</button>
+    </div>
+    <input id="file" type="file" accept="audio/*" style="display:none">
+    <input id="q" value="${q.replace(/"/g,"")}" placeholder="Artist">
+    <div class="chips" id="schools">${SCH.map(s=>`<button data-s="${s[0]}" class="${school===s[0]?"on":""}">${s[1]}</button>`).join("")}</div>
+    <div class="chips sc" id="arts">${list.map(x=>`<button data-id="${x[0]}" class="${x[0]===id?"on":""}">${x[1]}</button>`).join("")}</div>
+    <div class="box">
+      <p class="lab">Customise</p>
+      <div class="grid2">
+        <label class="m">BPM<input id="bpm" type="number" min="120" max="230" value="${bpm}"></label>
+        <label class="m">Key<select id="key">${KEYS.map(k=>`<option${k===key?" selected":""}>${k}</option>`).join("")}</select></label>
+      </div>
+      <label class="m">Track name<input id="track" value="${(you.track||"").replace(/"/g,"")}" placeholder="Untitled"></label>
+      <label class="m">Reference track<input id="ref" value="${(you.ref||"").replace(/"/g,"")}" placeholder="e.g. a Rejecta drop"></label>
+      <p class="m" style="margin-top:.6rem">Kick</p>
+      <div class="chips" id="kickc">${[["raw","Raw"],["pvc","PVC"],["musical","Musical"]].map(x=>`<button data-v="${x[0]}" class="${you.kick===x[0]?"on":""}">${x[1]}</button>`).join("")}</div>
+      <p class="m" style="margin-top:.6rem">Bass</p>
+      <div class="chips" id="bassc">${[["reverse","Reverse"],["offbeat","Offbeat"],["none","None"]].map(x=>`<button data-v="${x[0]}" class="${you.bass===x[0]?"on":""}">${x[1]}</button>`).join("")}</div>
+      <p class="m" style="margin-top:.6rem">Hook</p>
+      <div class="chips" id="hookc">${[["screech","Screech"],["saw","Saw"],["piano","Piano"],["vox","Vox"],["stab","Stab"]].map(x=>`<button data-v="${x[0]}" class="${you.hook===x[0]?"on":""}">${x[1]}</button>`).join("")}</div>
+      <p class="m" style="margin-top:.6rem">Vocal</p>
+      <div class="chips" id="voxc">${[["none","None"],["chop","Chop"],["shout","Shout"],["sung","Sung"]].map(x=>`<button data-v="${x[0]}" class="${you.vox===x[0]?"on":""}">${x[1]}</button>`).join("")}</div>
+      <p class="m" style="margin-top:.6rem">Your plugs</p>
+      <div class="chips" id="plugc">${PLUGS.map(p=>`<button data-v="${p}" class="${you.plugs.includes(p)?"on":""}">${p}</button>`).join("")}</div>
+      <p class="m" style="margin-top:.6rem">Layers in the session</p>
+      <div class="chips" id="layers">${LAYERS.map(l=>`<button data-l="${l}" class="${layers.includes(l)?"on":""}">${l}</button>`).join("")}</div>
+      <textarea id="notes" placeholder="What you already have…">${notes.replace(/</g,"&lt;")}</textarea>
+    </div>
+    <button class="go" id="gen">New arrangement</button>
+    <p class="meta" style="margin-top:.5rem">${a[1]} · seed ${live.seed} · ${live.total} bars</p>
+    <div class="box"><p class="lab">Do this now</p><p>${pack.next}</p></div>
+    <div class="box"><p class="lab">Idea</p><p>${pack.idea}</p></div>
+    <div class="row"><div><p class="lab">Bar</p><p class="bar">${bar+1}</p></div>
+      <div style="text-align:right"><p class="lab">Section</p><p class="sec">${cur.label}</p><p class="meta">${phrase}/${cur.bars}</p></div></div>
+    <div class="strip">${live.sec.map(s=>`<button class="${s.kind} ${bar>=s.start&&bar<s.start+s.bars?"on":""}" data-bar="${s.start}" style="flex:${s.bars}"></button>`).join("")}</div>
+    <ol>${live.sec.map(s=>`<li style="display:flex;justify-content:space-between;gap:.5rem;padding:.15rem 0"><span>${s.label}</span><span class="meta">bar ${s.start+1} · ${s.bars}</span></li>`).join("")}</ol>
+    <div class="box"><p class="lab">Build the track</p>${pack.build.map((s,i)=>`<p>${i+1}. ${s}</p>`).join("")}</div>
+    <div class="box"><p class="lab">Instruments</p>${pack.instruments.map(x=>`<p><b>${x[0]}</b><br><span class="m">${x[1]}</span></p>`).join("")}</div>
+    <div class="box"><p class="lab">Mix · Kick 3 / Serum / FabFilter / Logic</p>${pack.mix.map(x=>`<p><b>${x[0]}</b><br><span class="m">${x[1]}</span></p>`).join("")}</div>
+    <div class="box"><p class="lab">Serum</p>${pack.serum.map(x=>`<p>${x}</p>`).join("")}</div>
+    <div class="box"><p class="lab">PVC / extra kicks</p>${pack.kicks.map(x=>`<p><b>${x[0]}</b><br><span class="m">${x[1]}</span></p>`).join("")}</div>
+    <div class="box"><p class="lab">Speakers</p>${pack.speakers.map(x=>`<p><b>${x[0]}</b> <span class="meta">${x[1]===0?"C":x[1]>0?"R "+x[1]:"L "+Math.abs(x[1])}</span></p><div class="pan"><span class="dot" style="left:${((x[1]+100)/200)*100}%"></span></div><p class="m">${x[2]}</p>`).join("")}</div>
+    <div class="box"><p class="lab">Master</p>${pack.master.map(x=>`<p>${x}</p>`).join("")}</div>
+    <div class="box"><p class="lab">FX now</p>${now.length?now.map(f=>`<p><b>${f.name}</b> <span class="meta">bar ${f.bar+1}</span><br><span class="m">${f.how}</span></p>`).join(""):"<p class='m'>Edges get the hits.</p>"}</div>
+    <div class="box"><p class="lab">FX template</p>${live.fx.map(f=>`<p style="display:flex;justify-content:space-between"><span>${f.name}</span><span class="meta">bar ${f.bar+1}</span></p>`).join("")}</div>
+    <button class="go ghost" id="save">Save template notes</button>
+    <button class="go ghost" id="mtxt">Save markers.txt</button>
+    <button class="go ghost" id="mmid">Save markers.mid</button>
+    <p class="m" style="margin-top:.6rem">Logic: set BPM to ${bpm}. Import the .mid (File → Import → MIDI) for markers, or type markers.txt on the Arrangement track. Then File → Save as Template. Not an Audio Unit.</p>
+  `;
+  document.getElementById("q").oninput=e=>{q=e.target.value;render()};
+  document.getElementById("bpm").onchange=e=>{bpm=+e.target.value||bpm; refreshPack(); render()};
+  document.getElementById("key").onchange=e=>{key=e.target.value; refreshPack(); render()};
+  document.getElementById("notes").oninput=e=>{notes=e.target.value};
+  document.getElementById("track").oninput=e=>{you.track=e.target.value; persist()};
+  document.getElementById("ref").oninput=e=>{you.ref=e.target.value; persist()};
+  document.getElementById("track").onchange=()=>{refreshPack(); render()};
+  document.getElementById("ref").onchange=()=>{refreshPack(); render()};
+  const setYou=(k,v)=>{you[k]=v; persist(); refreshPack(); render()};
+  document.querySelectorAll("#kickc button").forEach(b=>b.onclick=()=>setYou("kick",b.dataset.v));
+  document.querySelectorAll("#bassc button").forEach(b=>b.onclick=()=>setYou("bass",b.dataset.v));
+  document.querySelectorAll("#hookc button").forEach(b=>b.onclick=()=>setYou("hook",b.dataset.v));
+  document.querySelectorAll("#voxc button").forEach(b=>b.onclick=()=>setYou("vox",b.dataset.v));
+  document.querySelectorAll("#plugc button").forEach(b=>b.onclick=()=>{
+    const p=b.dataset.v;
+    you.plugs=you.plugs.includes(p)?you.plugs.filter(x=>x!==p):you.plugs.concat(p);
+    persist(); refreshPack(); render();
+  });
+  document.querySelectorAll("#schools button").forEach(b=>b.onclick=()=>{school=b.dataset.s;render()});
+  document.querySelectorAll("#arts button").forEach(b=>b.onclick=()=>{id=b.dataset.id;applyArtist()});
+  document.querySelectorAll("#layers button").forEach(b=>b.onclick=()=>{const l=b.dataset.l; layers=layers.includes(l)?layers.filter(x=>x!==l):layers.concat(l); refreshPack(); render()});
+  document.getElementById("gen").onclick=regen;
+  document.getElementById("save").onclick=save;
+  document.getElementById("mtxt").onclick=saveMarkersTxt;
+  document.getElementById("mmid").onclick=saveMidi;
+  document.getElementById("play").onclick=playToggle;
+  document.getElementById("back").onclick=()=>jump(-1);
+  document.getElementById("fwd").onclick=()=>jump(1);
+  document.getElementById("up").onclick=()=>document.getElementById("file").click();
+  document.getElementById("file").onchange=e=>{const f=e.target.files[0]; if(f) onSong(f)};
+  document.querySelectorAll(".strip button").forEach(b=>b.onclick=()=>{bar=+b.dataset.bar; if(songName) audio.currentTime=bar*(60/bpm)*4; render()});
+}
+render();
+</script>
+</body>
+</html>

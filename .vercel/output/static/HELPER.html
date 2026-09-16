@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HARDSTYLE HELPER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0c0b;--s:#161412;--s2:#1c1a17;--fg:#e8e2d6;--m:#8a8478;--b:rgba(232,226,214,.12)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 Nunito,sans-serif}
+button,input{font:inherit;cursor:pointer}
+.w{max-width:36rem;margin:0 auto;padding:1.25rem}
+.p{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:1.2rem}
+h1{font-family:Bungee,Impact,sans-serif;font-size:1.45rem;margin:0;line-height:1.15}
+.m{color:var(--m);font-size:.8rem}
+.meta{font-family:ui-monospace,monospace;font-size:.75rem;color:var(--m)}
+input{width:100%;height:2.6rem;margin-top:1rem;padding:0 .75rem;border:1px solid var(--b);border-radius:8px;background:var(--s2);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.7rem}
+.chips.sc{max-height:9rem;overflow:auto}
+.chips button{height:2.1rem;padding:0 .7rem;border-radius:8px;border:1px solid var(--b);background:var(--s2);color:var(--m);font-size:.78rem}
+.chips button.on{background:var(--fg);color:var(--bg);border-color:transparent}
+.go{width:100%;height:2.6rem;margin-top:1rem;border:0;border-radius:8px;background:var(--fg);color:var(--bg);font-weight:700}
+.ghost{background:var(--s2);color:var(--fg);border:1px solid var(--b)}
+.bar{font-family:Bungee,Impact,sans-serif;font-size:3.1rem;margin:0;line-height:.95}
+.sec{font-family:Bungee,Impact,sans-serif;font-size:1.15rem;margin:0}
+.row{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-top:1rem}
+.strip{display:flex;height:2.4rem;overflow:hidden;border-radius:8px;border:1px solid var(--b);margin-top:.7rem}
+.strip button{border:0;min-width:0;opacity:.5}
+.strip button.on{opacity:1}
+.intro{background:#1a1815}.break{background:#24211c}.build{background:#2e2a24}.drop{background:#3a352d}.outro{background:#1d1b18}
+ol,ul{list-style:none;padding:0;margin:.6rem 0 0}
+.box{margin-top:.9rem;background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:.9rem}
+.lab{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--m);margin:0 0 .4rem}
+</style>
+</head>
+<body>
+<div class="w"><div class="p" id="app"></div></div>
+<script>
+const A=[
+["ar-gang","AR Gang","ar-gang",152,"G minor"],["rebelion","Rebelion","ar-gang",155,"E minor"],["adjuzt","Adjuzt","ar-gang",154,"G minor"],
+["so-juice","So Juice","ar-gang",155,"E minor"],["aversion","Aversion","ar-gang",154,"G minor"],["the-purge","The Purge","ar-gang",152,"E minor"],
+["deezl","Deezl","ar-gang",155,"G minor"],["riot-shift","Riot Shift","ar-gang",154,"E minor"],["anderex","Anderex","ar-gang",155,"E minor"],
+["the-straikerz","The Straikerz","ar-gang",155,"G minor"],["lil-texas","Lil Texas","lil-texas",160,"A minor"],["vertile","Vertile","lil-texas",160,"A minor"],
+["rooler","Rooler","raw",160,"E minor"],["sickmode","Sickmode","raw",158,"G minor"],["rejecta","Rejecta","raw",155,"G minor"],
+["d-sturb","D-Sturb","raw",155,"E minor"],["warface","Warface","raw",155,"E minor"],["mutilator","Mutilator","raw",160,"E minor"],
+["radical-redemption","Radical Redemption","raw",155,"E minor"],["adaro","Adaro","raw",150,"G minor"],["zatox","Zatox","raw",150,"E minor"],
+["hard-driver","Hard Driver","raw",155,"G minor"],["e-force","E-Force","raw",150,"G minor"],["crypsis","Crypsis","raw",150,"E minor"],
+["delete","Delete","raw",155,"E minor"],["headhunterz","Headhunterz","euphoric",150,"A minor"],["wildstylez","Wildstylez","euphoric",150,"A minor"],
+["brennan-heart","Brennan Heart","euphoric",150,"A minor"],["coone","Coone","euphoric",150,"A minor"],["da-tweekaz","Da Tweekaz","euphoric",150,"A minor"],
+["sub-zero-project","Sub Zero Project","euphoric",150,"G minor"],["phuture-noize","Phuture Noize","euphoric",150,"A minor"],
+["atmozfears","Atmozfears","euphoric",150,"A minor"],["ran-d","Ran-D","euphoric",150,"A minor"],["sound-rush","Sound Rush","euphoric",150,"A minor"],
+["wasted-penguinz","Wasted Penguinz","euphoric",150,"A minor"],["keltek","Keltek","euphoric",150,"A minor"],["jdx","JDX","euphoric",150,"A minor"],
+["technoboy","Technoboy","euphoric",150,"A minor"],["darren-styles","Darren Styles","uk",170,"A minor"],["s3rl","S3RL","uk",170,"F minor"],
+["hixxy","Hixxy","uk",170,"A minor"],["gammer","Gammer","uk",170,"A minor"],["re-style","Re-Style","uk",170,"A minor"],
+["lady-faith","Lady Faith","uk",170,"A minor"],["angerfist","Angerfist","hardcore",190,"E minor"],["sefa","Sefa","hardcore",200,"A minor"],
+["dr-peacock","Dr Peacock","hardcore",200,"A minor"],["miss-k8","Miss K8","hardcore",180,"E minor"],["neophyte","Neophyte","hardcore",175,"E minor"],
+["partyraiser","Partyraiser","hardcore",180,"E minor"],["korsakoff","Korsakoff","hardcore",180,"E minor"],["d-fence","D-Fence","hardcore",200,"E minor"]
+];
+const SCH=[["all","All"],["ar-gang","AR Gang"],["lil-texas","Lil Texas"],["raw","Raw"],["euphoric","Euphoric"],["uk","UK"],["hardcore","Hardcore"]];
+const IDEAS={
+"ar-gang":["Spoken line in the break, screech as the only drop hook.","Kick + reverse bass first. No melody until drop 2.","Empty 8 bars then a one-shot screech."],
+raw:["Kick design is the track. Stab instead of climax saw.","Dark pad break, then a wall. Second drop = extra crunch.","Industrial FX glue. Leave holes for the kick."],
+"lil-texas":["Chopped vocal as the rhythm. Happy lead, hard kick.","Hook in 8 bars. Drop hits immediately.","Pitched vox offbeats. Bounce hats."],
+euphoric:["Break melody becomes the drop lead. Reverse bass locked.","Longer break, same 32-bar drop.","Climax saw, kick still wins the center."],
+uk:["4-bar piano riff first. Offbeat bass, not reverse bass.","Vocal hook is the song. Drop restates it.","Snare build last 4 of the 16."],
+hardcore:["Kick wall. Stab. Shout. Stop writing.","Short map. Distortion before EQ.","Hoover or nothing. No pretty break."]
+};
+function rng(seed){let s=seed>>>0||1;return()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296}}
+function pick(r,xs){return xs[Math.floor(r()*xs.length)]}
+function gen(a,seed){
+  const r=rng(seed), school=a[2];
+  let intro,brk,build,drop,outro,second;
+  if(school==="hardcore"){intro=pick(r,[8,16]);brk=pick(r,[8,16]);build=pick(r,[8,16]);drop=pick(r,[16,32]);outro=pick(r,[8,16]);second=r()>0.4}
+  else if(school==="lil-texas"||school==="uk"){intro=pick(r,[8,16]);brk=pick(r,[16,24,32]);build=pick(r,[8,16]);drop=32;outro=pick(r,[8,16]);second=r()>0.25}
+  else{intro=pick(r,[16,16,32]);brk=pick(r,[16,32,32]);build=pick(r,[8,16,16]);drop=32;outro=pick(r,[8,16]);second=r()>0.15}
+  const raw=school==="ar-gang"||school==="raw", happy=school==="lil-texas"||school==="uk";
+  const L={intro:raw?"Kick intro":happy?"Hook / drums in":school==="hardcore"?"Kick wall":"Groove in",
+    break:raw?"Dark break":happy?"Hook break":school==="hardcore"?"Stab break":"Melody break",
+    build:happy?"Snare build":raw?"Noise build":school==="hardcore"?"Fill":"Snare build",
+    drop:raw?"Raw drop":happy?"Bounce drop":school==="hardcore"?"Peak":"Climax drop"};
+  const sec=[]; let bar=0;
+  const push=(kind,label,bars)=>{sec.push({kind,label,start:bar,bars});bar+=bars};
+  push("intro",L.intro,intro); if(r()>0.55&&intro<32) push("intro","Groove in",16);
+  push("break",L.break,brk); push("build",L.build+" 1",build); push("drop",L.drop+" 1",drop);
+  if(second){push("break",L.break+" 2",pick(r,[16,brk]));push("build",L.build+" 2",pick(r,[8,build]));push("drop",L.drop+" 2",drop)}
+  push("outro","Outro",outro);
+  const fx=[];
+  sec.forEach((s,i)=>{const end=s.start+s.bars,next=sec[i+1];
+    if(s.kind==="intro"&&next&&next.kind!=="intro") fx.push({bar:end-1,name:"Reverse crash",len:"1 bar",how:"Reverse a crash into the next section. Center."});
+    if(s.kind==="break") fx.push({bar:s.start,name:raw?"Atmosphere swell":"Pad / vox throw",len:"2 bars",how:"Wide. Duck under the kick if it is still in."});
+    if(s.kind==="build"){fx.push({bar:s.start,name:"White noise rise",len:s.bars+" bars",how:raw?"Noise + reverse kick last bar.":"Snare last 4 + noise under."});
+      fx.push({bar:end-Math.min(4,s.bars),name:raw?"Fill extras":"Snare roll",len:Math.min(4,s.bars)+" bars",how:"1/8 then 1/16. Cut on the drop downbeat."})}
+    if(s.kind==="drop") fx.push({bar:s.start,name:"Impact + crash",len:"1 hit",how:"Kick dead center. Crash slightly off. Pickup extra last 16th."});
+    if(s.kind==="outro") fx.push({bar:s.start,name:"Strip FX",len:s.bars+" bars",how:"Kill the rise. Kick + one motif out."});
+  });
+  return {seed,sec,fx,total:bar};
+}
+function studio(a,seed){
+  const r=rng(seed^0x9e3779b9), s=a[2], raw=s==="ar-gang"||s==="raw", happy=s==="lil-texas"||s==="uk", hc=s==="hardcore", uk=s==="uk";
+  const idea=a[1]+": "+pick(r,IDEAS[s]||IDEAS.raw);
+  const build=raw?[
+    "Kick 3 — body, click, clip. Nothing else until it punches.",
+    "Serum reverse bass, same MIDI as the kick, sidechain Pro-C.",
+    "Markers from this map. Mute everything that isn't kick+bass.",
+    "Break: atmosphere + one motif. No climax saw.",
+    "Drop hook: short screech (Serum, 80–180 ms).",
+    "FX last. Mix. Then master."
+  ]:happy?[
+    "Write the 4-bar hook (piano or vox) before the kick is pretty.",
+    "Kick 3 at "+a[3]+". Offbeat bass in Serum, not reverse bass.",
+    "Markers. Drop restates the hook.",
+    "Hats/clap busier than hardstyle. Bounce.",
+    "Snare roll last 4 of each build.",
+    "Mix. Master quieter than raw — leave the vocal."
+  ]:hc?[
+    "Kick 3 + Kilohearts Distortion until it hurts. Gate the tail.",
+    "Stab or hoover. That's the hook.",
+    "Short map. No 32-bar tease.",
+    "Shout vox one-liner.",
+    "Industrial FX, then stop adding.",
+    "Clip hard. Master last."
+  ]:[
+    "Break melody in Serum first (the drop will copy it).",
+    "Kick 3 + reverse bass locked to 1.",
+    "Markers. 32-bar phrases.",
+    "Build: white noise + snare last 4.",
+    "Climax lead = break melody, unison 7, HP 180 Hz.",
+    "Mix around the kick. Master with Ozone / Adaptive Limiter."
+  ];
+  const instruments=raw?[
+    ["Kick","Kick 3. Body 70–95 Hz. Click 4 kHz. Kilohearts Distortion after EQ. Soft clip."],
+    ["Reverse bass","Serum: saw, pitch env down, short. Same notes as kick. Pro-C sc from kick."],
+    ["Screech","Serum noise + bandpass. 80–180 ms. Slightly left of center."],
+    ["Stab","Serum or Logic ES2. Beat 1. Short decay."],
+    ["Atmosphere","Vital/Serum pad, wide, ducked. Break only."]
+  ]:happy?[
+    ["Kick","Kick 3, punchy not extra-raw. HP 28 Hz."],
+    ["Offbeat bass","Serum square/saw on the offbeats. Logic Compressor sc from kick."],
+    [uk?"Piano":"Lead",uk?"Logic Sampler or Serum keys. 4-bar riff.":"Serum supersaw, bounce env, not 4-bar tails."],
+    ["Vox","Chop in Logic. Pitch. Delay throw in the break only."],
+    ["Hats","Busier. Slightly right. No reverb wash."]
+  ]:hc?[
+    ["Kick","Kick 3 → Kilohearts Distortion → clip. Gate. No reverb."],
+    ["Stab / hoover","Serum or Logic Retro Synth. Short. Distorted."],
+    ["Shout","One line. Center. Clip."],
+    ["FX","Metal hits, noise. Wide."]
+  ]:[
+    ["Kick","Kick 3, musical pitch. Reverse bass under it."],
+    ["Reverse bass","Serum. Sidechain Pro-C. Mono."],
+    ["Break melody","Serum 2–3 osc, low unison. This is the drop lead later."],
+    ["Climax lead","Same MIDI as the break. Unison 7, HP 180 Hz, Pro-Q scoop 300 Hz."],
+    ["Pad / choir","Vital or Serum. Wide. Duck on kick."]
+  ];
+  const mix=[
+    ["Kick","Kick 3 → Logic Channel EQ → Kilohearts Distortion → clip → FabFilter Pro-C (4:1, atk 8–20 ms)."],
+    ["Bass","Serum → Channel EQ (HP 30, LP 180) → Pro-C sidechain from kick. Mono."],
+    ["Leads","Serum → Pro-Q scoop 250–400 Hz → delay on send, not insert."],
+    ["Vox","Channel EQ HP 120 → Compressor → delay send. Center."],
+    ["FX","Wide. HP 200 Hz. Never in the kick's 50–100 Hz."]
+  ];
+  const master=[
+    "Bus: FabFilter Pro-Q — tiny dip 300 Hz, air +1 dB at 12 kHz if it needs it.",
+    "iZotope Ozone: imager stay near mono under 120 Hz. Maximizer last, or skip it.",
+    "Logic Adaptive Limiter on Stereo Out, 0.3–1 dB of GR. If it pumps, you over-limited.",
+    "Reference a "+a[1]+" track in the same key. Match punch, not loudness first."
+  ];
+  return {idea,build,instruments,mix,master};
+}
+
+let school="all", q="", id="ar-gang", bar=0, live=null, pack=null;
+function artist(){return A.find(x=>x[0]===id)||A[0]}
+function newSeed(){return (Date.now()^Math.floor(Math.random()*1e9))>>>0}
+function regen(){const a=artist(); live=gen(a,newSeed()); pack=studio(a,live.seed); bar=0; render()}
+function save(){
+  const a=artist();
+  const lines=["HARDSTYLE HELPER — Logic notes. Not an Audio Unit.",
+    a[1]+" · "+a[3]+" BPM · "+a[4]+" · seed "+live.seed,"","IDEA",pack.idea,"","BUILD",
+    ...pack.build.map((s,i)=>(i+1)+". "+s),"","INSTRUMENTS",
+    ...pack.instruments.map(x=>x[0]+": "+x[1]),"","MIX",
+    ...pack.mix.map(x=>x[0]+": "+x[1]),"","MASTER",...pack.master.map(x=>"- "+x),"","ARRANGEMENT",
+    ...live.sec.map(s=>"Bar "+(s.start+1)+"  "+s.label+"  ("+s.bars+")"),"","FX",
+    ...live.fx.map(f=>"Bar "+(f.bar+1)+"  "+f.name+"  "+f.how)];
+  const blob=new Blob([lines.join("\n")],{type:"text/plain"});
+  const x=document.createElement("a"); x.href=URL.createObjectURL(blob); x.download="HELPER-"+a[0]+"-"+live.seed+".txt"; x.click();
+}
+function render(){
+  if(!live){const a=artist(); live=gen(a,newSeed()); pack=studio(a,live.seed)}
+  const a=artist();
+  const list=A.filter(x=>(school==="all"||x[2]===school)&&(!q||x[1].toLowerCase().includes(q)));
+  const cur=live.sec.find(s=>bar>=s.start&&bar<s.start+s.bars)||live.sec[0];
+  const now=live.fx.filter(f=>Math.abs(f.bar-bar)<=2);
+  document.getElementById("app").innerHTML=`
+    <h1>HARDSTYLE HELPER</h1>
+    <p class="m">Map + mix. Kick 3, Serum, FabFilter, Logic. Not an AU.</p>
+    <p class="meta" style="margin-top:.4rem">${a[3]} BPM · ${a[4]}</p>
+    <input id="q" value="${q.replace(/"/g,"")}" placeholder="Artist">
+    <div class="chips" id="schools">${SCH.map(s=>`<button data-s="${s[0]}" class="${school===s[0]?"on":""}">${s[1]}</button>`).join("")}</div>
+    <div class="chips sc" id="arts">${list.map(x=>`<button data-id="${x[0]}" class="${x[0]===id?"on":""}">${x[1]}</button>`).join("")}</div>
+    <button class="go" id="gen">New arrangement</button>
+    <p class="meta" style="margin-top:.5rem">${a[1]} · seed ${live.seed} · ${live.total} bars</p>
+    <div class="box"><p class="lab">Idea</p><p>${pack.idea}</p></div>
+    <div class="row"><div><p class="lab">Bar</p><p class="bar">${bar+1}</p></div>
+      <div style="text-align:right"><p class="lab">Section</p><p class="sec">${cur.label}</p></div></div>
+    <div class="strip">${live.sec.map(s=>`<button class="${s.kind} ${bar>=s.start&&bar<s.start+s.bars?"on":""}" data-bar="${s.start}" style="flex:${s.bars}"></button>`).join("")}</div>
+    <ol>${live.sec.map(s=>`<li style="display:flex;justify-content:space-between;gap:.5rem;padding:.15rem 0"><span>${s.label}</span><span class="meta">bar ${s.start+1} · ${s.bars}</span></li>`).join("")}</ol>
+    <div class="box"><p class="lab">Build the track</p>${pack.build.map((s,i)=>`<p>${i+1}. ${s}</p>`).join("")}</div>
+    <div class="box"><p class="lab">Instruments</p>${pack.instruments.map(x=>`<p><b>${x[0]}</b><br><span class="m">${x[1]}</span></p>`).join("")}</div>
+    <div class="box"><p class="lab">Mix · your plugs</p>${pack.mix.map(x=>`<p><b>${x[0]}</b><br><span class="m">${x[1]}</span></p>`).join("")}</div>
+    <div class="box"><p class="lab">Master</p>${pack.master.map(x=>`<p>${x}</p>`).join("")}</div>
+    <div class="box"><p class="lab">FX now</p>${now.length?now.map(f=>`<p><b>${f.name}</b> <span class="meta">bar ${f.bar+1}</span><br><span class="m">${f.how}</span></p>`).join(""):"<p class='m'>Edges get the hits.</p>"}</div>
+    <div class="box"><p class="lab">FX template</p>${live.fx.map(f=>`<p style="display:flex;justify-content:space-between"><span>${f.name}</span><span class="meta">bar ${f.bar+1}</span></p>`).join("")}</div>
+    <button class="go ghost" id="save">Save Logic notes</button>
+  `;
+  document.getElementById("q").oninput=e=>{q=e.target.value;render()};
+  document.querySelectorAll("#schools button").forEach(b=>b.onclick=()=>{school=b.dataset.s;render()});
+  document.querySelectorAll("#arts button").forEach(b=>b.onclick=()=>{id=b.dataset.id;regen()});
+  document.getElementById("gen").onclick=regen;
+  document.getElementById("save").onclick=save;
+  document.querySelectorAll(".strip button").forEach(b=>b.onclick=()=>{bar=+b.dataset.bar;render()});
+}
+render();
+</script>
+</body>
+</html>

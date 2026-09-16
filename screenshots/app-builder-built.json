@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "VOCAL SOURCE",
+      "hasCanvas": false,
+      "bodyTextLen": 1955,
+      "bodyTextHash": "09fb68f0d1250310376599b0445fde437cde6d0b2992a8c043cedf9ea17fe18e",
+      "bodyTextPrefix": "500 LANES · 603 SAMPLE VOCALS · DJ 4×4 VOCAL SOURCE Vocals peopl",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "VOCAL SOURCE",
+      "hasCanvas": false,
+      "bodyTextLen": 1955,
+      "bodyTextHash": "09fb68f0d1250310376599b0445fde437cde6d0b2992a8c043cedf9ea17fe18e",
+      "bodyTextPrefix": "500 LANES · 603 SAMPLE VOCALS · DJ 4×4 VOCAL SOURCE Vocals peopl",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
