@@ -10,9 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalyseRouteImport } from './routes/analyse'
+import { Route as ArrangeRouteImport } from './routes/arrange'
+import { Route as AskRouteImport } from './routes/ask'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as GenresRouteImport } from './routes/genres'
 import { Route as LanesRouteImport } from './routes/lanes'
+import { Route as LearnRouteImport } from './routes/learn'
+import { Route as MixRouteImport } from './routes/mix'
+import { Route as PluginsRouteImport } from './routes/plugins'
 import { Route as SavedRouteImport } from './routes/saved'
+import { Route as SerumRouteImport } from './routes/serum'
 import { Route as SoundRouteImport } from './routes/sound'
 import { Route as StudioRouteImport } from './routes/studio'
 
@@ -21,9 +29,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyseRoute = AnalyseRouteImport.update({
+  id: '/analyse',
+  path: '/analyse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArrangeRoute = ArrangeRouteImport.update({
+  id: '/arrange',
+  path: '/arrange',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AskRoute = AskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GenresRoute = GenresRouteImport.update({
+  id: '/genres',
+  path: '/genres',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LanesRoute = LanesRouteImport.update({
@@ -31,9 +59,29 @@ const LanesRoute = LanesRouteImport.update({
   path: '/lanes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnRoute = LearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MixRoute = MixRouteImport.update({
+  id: '/mix',
+  path: '/mix',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PluginsRoute = PluginsRouteImport.update({
+  id: '/plugins',
+  path: '/plugins',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SavedRoute = SavedRouteImport.update({
   id: '/saved',
   path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SerumRoute = SerumRouteImport.update({
+  id: '/serum',
+  path: '/serum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SoundRoute = SoundRouteImport.update({
@@ -49,42 +97,117 @@ const StudioRoute = StudioRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analyse': typeof AnalyseRoute
+  '/arrange': typeof ArrangeRoute
+  '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
+  '/learn': typeof LearnRoute
+  '/mix': typeof MixRoute
+  '/plugins': typeof PluginsRoute
   '/saved': typeof SavedRoute
+  '/serum': typeof SerumRoute
   '/sound': typeof SoundRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analyse': typeof AnalyseRoute
+  '/arrange': typeof ArrangeRoute
+  '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
+  '/learn': typeof LearnRoute
+  '/mix': typeof MixRoute
+  '/plugins': typeof PluginsRoute
   '/saved': typeof SavedRoute
+  '/serum': typeof SerumRoute
   '/sound': typeof SoundRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analyse': typeof AnalyseRoute
+  '/arrange': typeof ArrangeRoute
+  '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
+  '/learn': typeof LearnRoute
+  '/mix': typeof MixRoute
+  '/plugins': typeof PluginsRoute
   '/saved': typeof SavedRoute
+  '/serum': typeof SerumRoute
   '/sound': typeof SoundRoute
   '/studio': typeof StudioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/catalog' | '/lanes' | '/saved' | '/sound' | '/studio'
+  fullPaths:
+    | '/'
+    | '/analyse'
+    | '/arrange'
+    | '/ask'
+    | '/catalog'
+    | '/genres'
+    | '/lanes'
+    | '/learn'
+    | '/mix'
+    | '/plugins'
+    | '/saved'
+    | '/serum'
+    | '/sound'
+    | '/studio'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/catalog' | '/lanes' | '/saved' | '/sound' | '/studio'
-  id: '__root__' | '/' | '/catalog' | '/lanes' | '/saved' | '/sound' | '/studio'
+  to:
+    | '/'
+    | '/analyse'
+    | '/arrange'
+    | '/ask'
+    | '/catalog'
+    | '/genres'
+    | '/lanes'
+    | '/learn'
+    | '/mix'
+    | '/plugins'
+    | '/saved'
+    | '/serum'
+    | '/sound'
+    | '/studio'
+  id:
+    | '__root__'
+    | '/'
+    | '/analyse'
+    | '/arrange'
+    | '/ask'
+    | '/catalog'
+    | '/genres'
+    | '/lanes'
+    | '/learn'
+    | '/mix'
+    | '/plugins'
+    | '/saved'
+    | '/serum'
+    | '/sound'
+    | '/studio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyseRoute: typeof AnalyseRoute
+  ArrangeRoute: typeof ArrangeRoute
+  AskRoute: typeof AskRoute
   CatalogRoute: typeof CatalogRoute
+  GenresRoute: typeof GenresRoute
   LanesRoute: typeof LanesRoute
+  LearnRoute: typeof LearnRoute
+  MixRoute: typeof MixRoute
+  PluginsRoute: typeof PluginsRoute
   SavedRoute: typeof SavedRoute
+  SerumRoute: typeof SerumRoute
   SoundRoute: typeof SoundRoute
   StudioRoute: typeof StudioRoute
 }
@@ -98,11 +221,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analyse': {
+      id: '/analyse'
+      path: '/analyse'
+      fullPath: '/analyse'
+      preLoaderRoute: typeof AnalyseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arrange': {
+      id: '/arrange'
+      path: '/arrange'
+      fullPath: '/arrange'
+      preLoaderRoute: typeof ArrangeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ask': {
+      id: '/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/catalog': {
       id: '/catalog'
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/genres': {
+      id: '/genres'
+      path: '/genres'
+      fullPath: '/genres'
+      preLoaderRoute: typeof GenresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lanes': {
@@ -112,11 +263,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LanesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn': {
+      id: '/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mix': {
+      id: '/mix'
+      path: '/mix'
+      fullPath: '/mix'
+      preLoaderRoute: typeof MixRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plugins': {
+      id: '/plugins'
+      path: '/plugins'
+      fullPath: '/plugins'
+      preLoaderRoute: typeof PluginsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/saved': {
       id: '/saved'
       path: '/saved'
       fullPath: '/saved'
       preLoaderRoute: typeof SavedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/serum': {
+      id: '/serum'
+      path: '/serum'
+      fullPath: '/serum'
+      preLoaderRoute: typeof SerumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sound': {
@@ -138,9 +317,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyseRoute: AnalyseRoute,
+  ArrangeRoute: ArrangeRoute,
+  AskRoute: AskRoute,
   CatalogRoute: CatalogRoute,
+  GenresRoute: GenresRoute,
   LanesRoute: LanesRoute,
+  LearnRoute: LearnRoute,
+  MixRoute: MixRoute,
+  PluginsRoute: PluginsRoute,
   SavedRoute: SavedRoute,
+  SerumRoute: SerumRoute,
   SoundRoute: SoundRoute,
   StudioRoute: StudioRoute,
 }

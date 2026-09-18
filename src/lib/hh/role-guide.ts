@@ -1,0 +1,31 @@
+import type { PluginRole } from "./plugins-kb";
+
+/** Generic explanation per role for plugins the knowledge base doesn't know by name. */
+export const ROLE_GUIDE: Record<PluginRole, { what: string; hardstyle: string; easy: string; hard: string }> = {
+  eq: { what: "Shapes frequency balance with bells, shelves and filters.", hardstyle: "High-pass everything but the kick; carve the lead around the kick's tok.", easy: "HP leads at 250 Hz, cut 2 dB at 300 Hz on the kick if muddy.", hard: "Narrow notches on distortion resonances, wide bells only for tone." },
+  "dynamic-eq": { what: "EQ bands that move with the signal or a sidechain.", hardstyle: "Duck the lead's lows only when the kick hits.", easy: "Band at 100 Hz on the lead, keyed to the kick, -4 dB.", hard: "Band at the kick's tok frequency on the whole lead bus, keyed to the kick." },
+  compressor: { what: "Reduces dynamic range; with a sidechain input it ducks.", hardstyle: "Bus glue and sidechain pumping.", easy: "2:1, 10 ms attack, auto release, 2–3 dB on the lead bus.", hard: "Sidechain from the kick, fast attack, 120 ms release on pads." },
+  multiband: { what: "Compression per frequency band.", hardstyle: "Kick tail control: steady sub, breathing mids.", easy: "Two bands split at 100 Hz on the kick bus.", hard: "OTT-style upward compression on leads at 30%." },
+  limiter: { what: "Brickwall ceiling with make-up gain.", hardstyle: "Master loudness.", easy: "Ceiling -0.3 dBTP, push to -6 LUFS.", hard: "Two stages: clip 2 dB, then limit 3 dB." },
+  clipper: { what: "Hard/soft clips peaks instead of compressing.", hardstyle: "Kick punch and master loudness without pumping.", easy: "1–2 dB on the master before the limiter.", hard: "4 dB on the kick punch layer only." },
+  saturation: { what: "Adds harmonics gently.", hardstyle: "Kick tail warmth, lead density.", easy: "Tape-style at 20% on the tail.", hard: "Multiband: warm the lows, clean the highs." },
+  distortion: { what: "Adds harmonics aggressively.", hardstyle: "Raw kick mids and screeches.", easy: "30% drive on the tail, LP 8 kHz after.", hard: "Stages: clip → tube → cab sim on 150–600 Hz only." },
+  reverb: { what: "Simulated space.", hardstyle: "Break pads, snare rolls, vocal tails — never on the kick.", easy: "Hall 3 s on a send, HP 300 Hz.", hard: "Reverse reverb swell into the drop." },
+  delay: { what: "Echoes.", hardstyle: "Lead ping-pong, vocal throws.", easy: "1/8 dotted, 30% feedback, HP 500 Hz.", hard: "Automate feedback to 90% on the last bar of a break." },
+  imager: { what: "Controls stereo width per band.", hardstyle: "Mono lows, wide leads.", easy: "Below 120 Hz width 0.", hard: "Widen only above 500 Hz on the lead bus; check mono." },
+  meter: { what: "Shows level, loudness, spectrum or phase.", hardstyle: "Hit the lane's LUFS target; watch low-end correlation.", easy: "-6 LUFS integrated, TP -0.3.", hard: "Compare spectrum to a reference at equal loudness." },
+  synth: { what: "Generates sound from oscillators/wavetables/samples.", hardstyle: "Leads, screeches, tails, basses.", easy: "Saw, unison 7, LP 60%, chorus.", hard: "See the Serum page for full patches." },
+  kick: { what: "Synthesises or designs kick drums.", hardstyle: "The kick tail and punch.", easy: "Preset → root note → length 1 beat → render.", hard: "Per-band distortion, tail and punch on separate curves." },
+  sampler: { what: "Plays audio samples chromatically.", hardstyle: "Kick layers, vocal chops, climax kicks.", easy: "Kick one-shot, play the melody.", hard: "Punch and tail as separate zones; only the tail follows pitch." },
+  pitch: { what: "Tuning and pitch editing.", hardstyle: "Tune vocals; re-pitch chops to the key.", easy: "80% correction on the vocal.", hard: "Move chop notes to chord tones." },
+  vocal: { what: "Vocal-specific processing (de-ess, doubler, channel strip).", hardstyle: "Euphoric toplines, raw spoken samples.", easy: "HP 150, de-ess, 4:1 compression.", hard: "Parallel saturated copy under the clean vocal in the drop." },
+  filter: { what: "Resonant filter effect.", hardstyle: "Builds and screech movement.", easy: "LP opening over the 16-bar build.", hard: "Comb filter on a screech tracked to the note." },
+  modulation: { what: "Phaser, flanger, chorus, LFO tools.", hardstyle: "Screech sweeps and lead width.", easy: "Phaser rate 0.3 Hz on a screech.", hard: "Two phasers at different rates in series." },
+  utility: { what: "Gain, pan, mono, phase.", hardstyle: "Mono checks and gain staging.", easy: "Kick bus at -3 dBFS peak.", hard: "Flip the phase of a layered tail and pick the better sum." },
+  transient: { what: "Attack/sustain shaper.", hardstyle: "Punch on the kick, shorter claps.", easy: "+15% attack on the punch.", hard: "Negative sustain on the tail layer to shorten it without EQ." },
+  sidechain: { what: "Ducking tool with a drawn curve.", hardstyle: "Pump leads and pads to the kick.", easy: "Curve 3, mix 60% on the lead bus.", hard: "Multiband: duck lows 100%, highs 30%." },
+  mastering: { what: "Suite of mastering processors.", hardstyle: "Final EQ, multiband, limiter.", easy: "Assistant, then remove what you don't need.", hard: "Mid/side EQ + maximizer with a clipper before it." },
+  resonance: { what: "Automatically tames resonances.", hardstyle: "Harsh distorted kicks and screeches.", easy: "Depth 30% on the kick bus.", hard: "Sidechain mode: carve the lead around the kick." },
+  drums: { what: "Drum machine / kit player.", hardstyle: "Claps, hats, percussion loops.", easy: "909 kit, clap on 2 and 4.", hard: "Layer two claps with different transient shapes." },
+  amp: { what: "Guitar amp and cabinet simulation.", hardstyle: "A raw-kick secret: cabs shape the distorted mids.", easy: "High-gain amp, cab only, 30% mix on the tail.", hard: "Two cabs on the 150–600 Hz band only." },
+};

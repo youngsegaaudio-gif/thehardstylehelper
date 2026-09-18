@@ -6,7 +6,7 @@ import { SiteShell } from "@/components/site-shell";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "VOCAL SOURCE";
+const APP_NAME = "HARDSTYLE HELPER";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -17,7 +17,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "VOCAL SOURCE. Vocals people chop into hardstyle — 90s to now. Not hardstyle tracks. Titles and years only.",
+          "Analyse your track against ten hardstyle lanes, scan your plugins, and get mixing, Serum and arrangement advice.",
       },
       { name: "theme-color", content: "#0c0c0b" },
       { name: "mobile-web-app-capable", content: "yes" },

@@ -13,6 +13,17 @@
   --color-border: color-mix(in oklab, #e8e2d6 12%, transparent);
   --color-ring: color-mix(in oklab, #e8e2d6 45%, transparent);
   --color-danger: #8f3a32;
+  --color-ok: #7fb58a;
+  --color-warn: #d9a441;
+  --color-bad: #d2665a;
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-sec-intro: #3987e5;
+  --color-sec-break: #199e70;
+  --color-sec-build: #c98500;
+  --color-sec-drop: #d95926;
+  --color-sec-mid: #d55181;
+  --color-sec-outro: #008300;
   --color-section-intro: color-mix(in oklab, #e8e2d6 8%, #161412);
   --color-section-break: color-mix(in oklab, #e8e2d6 14%, #161412);
   --color-section-build: color-mix(in oklab, #e8e2d6 20%, #161412);
@@ -85,3 +96,17 @@
   mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 
+
+/* section colours: categorical slots validated for the dark surface */
+.sec-intro { background: var(--color-sec-intro); }
+.sec-break { background: var(--color-sec-break); }
+.sec-build { background: var(--color-sec-build); }
+.sec-drop { background: var(--color-sec-drop); }
+.sec-mid { background: var(--color-sec-mid); }
+.sec-outro { background: var(--color-sec-outro); }
+.fill-sec-intro { fill: var(--color-sec-intro); }
+.fill-sec-break { fill: var(--color-sec-break); }
+.fill-sec-build { fill: var(--color-sec-build); }
+.fill-sec-drop { fill: var(--color-sec-drop); }
+.fill-sec-mid { fill: var(--color-sec-mid); }
+.fill-sec-outro { fill: var(--color-sec-outro); }

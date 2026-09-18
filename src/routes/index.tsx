@@ -1,22 +1,33 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { ARTISTS, GENRES, VOCALS, VOCAL_STYLES } from "@/lib/hs-catalog";
-import { FEATURED, useVs } from "@/lib/vs-store";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, AudioWaveform, BookOpen, FolderSearch, LayoutList, MessageSquare, SlidersHorizontal, Waves, Music } from "lucide-react";
+import { HH_GENRES, HH_GENRE_BY_ID } from "@/lib/hh/genres";
+import { QUOTES } from "@/lib/hh/knowledge";
+import { PLUGIN_KB } from "@/lib/hh/plugins-kb";
+import { useHh } from "@/lib/hh/store";
+import { VOCALS } from "@/lib/hs-catalog";
 import { Button } from "@/components/ui/button";
-import { Eyebrow, VocalCard } from "@/components/site-ui";
+import { Eyebrow } from "@/components/site-ui";
 
 export const Route = createFileRoute("/")({
   component: Home,
-  head: () => ({ meta: [{ title: "VOCAL SOURCE" }] }),
+  head: () => ({ meta: [{ title: "HARDSTYLE HELPER" }] }),
 });
 
+const FEATURES = [
+  { to: "/analyse" as const, icon: AudioWaveform, t: "Analyse your track", d: "Drop a bounce. Tempo, key, kick tail and pitch, loudness, spectrum, width, structure — scored against ten lanes and turned into fixes." },
+  { to: "/genres" as const, icon: LayoutList, t: "Ten lanes, 500 references", d: "Early, classic, euphoric, raw, xtra raw, rawphoric, psy, hardcore, uptempo, frenchcore. Targets and fifty tracks each." },
+  { to: "/plugins" as const, icon: FolderSearch, t: "Scan your plugins", d: "Point it at your plugin folder. Every plugin explained: what it is, how hardstyle uses it, easy and hard moves. Advice then uses what you own." },
+  { to: "/mix" as const, icon: SlidersHorizontal, t: "Mixing & mastering", d: "Kick, bass, leads, drums, vocals, FX, buses, master — the easy way, the hard way, and the methods people use." },
+  { to: "/serum" as const, icon: Waves, t: "Serum & filters", d: "Init-patch recipes for leads, screeches, tails, reverse bass, psy bass, bounce. Filter types and filter rules." },
+  { to: "/arrange" as const, icon: Music, t: "Arrangements", d: "Bar-by-bar plans per lane in extended, radio or DJ form, with what to do in every section. Export text or MIDI markers." },
+  { to: "/ask" as const, icon: MessageSquare, t: "Ask anything", d: "Search everything the helper knows, or ask the AI coach with your scan and last analysis as context." },
+  { to: "/learn" as const, icon: BookOpen, t: "Learn", d: "History, glossary, labels, events, FAQ and the sayings producers repeat." },
+];
+
 function Home() {
-  const navigate = useNavigate();
-  const pickVocal = useVs((s) => s.pickVocal);
-  const setStyle = useVs((s) => s.setStyle);
-  const setGenre = useVs((s) => s.setGenre);
-  const cover = FEATURED[0];
-  const rest = FEATURED.slice(1, 7);
+  const report = useHh((s) => s.report);
+  const pluginCount = useHh((s) => s.plugins.length);
+  const quote = QUOTES[new Date().getDate() % QUOTES.length];
 
   return (
     <div>
@@ -24,107 +35,60 @@ function Home() {
         <div className="hs-staff pointer-events-none absolute inset-x-0 top-10 h-16 opacity-30" />
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-24">
           <Eyebrow>
-            {VOCALS.length} sample vocals · {ARTISTS.length} lanes · 90s–now
+            {HH_GENRES.length} lanes · {HH_GENRES.length * 50} references · {PLUGIN_KB.length} plugins known
           </Eyebrow>
           <h1 className="font-display mt-4 max-w-3xl text-4xl leading-none tracking-wide text-foreground sm:text-6xl">
-            Vocals people chop into hardstyle.
+            Analyse your track. Get told what to fix.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            Not hardstyle tracks. Eurodance, house, trance, 90s happy, hands-up — titles
-            and years. You source and clear the chop.
+            A hardstyle session coach. It listens to your bounce, scores it against ten lanes, scans the plugins on your computer, and gives you the easy fix and the hard fix for every finding.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 font-display tracking-wide">
-              <Link to="/catalog">
-                Browse the catalog
+              <Link to="/analyse">
+                Analyse a track
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12">
-              <Link to="/studio">Open the studio</Link>
+              <Link to="/plugins">{pluginCount ? `Your ${pluginCount} plugins` : "Scan your plugins"}</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {cover ? (
-        <section className="border-b border-border">
-          <div className="mx-auto grid max-w-6xl content-start items-start gap-5 px-4 py-10 sm:grid-cols-2 sm:items-end sm:gap-10 sm:px-6 sm:py-16">
-            <div>
-              <Eyebrow>Cover cut</Eyebrow>
-              <p className="font-mono mt-3 text-xs tabular-nums text-subtle">{cover.year}</p>
-              <h2 className="font-display mt-2 text-3xl leading-none tracking-wide text-foreground sm:text-5xl">
-                {cover.title}
-              </h2>
-              <p className="mt-3 text-sm text-muted">{cover.artist}</p>
-            </div>
-            <div>
-              <p className="text-base leading-relaxed text-foreground">{cover.why}</p>
-              <p className="mt-2 text-sm text-muted">
-                {cover.from} · {cover.chop} · the kind of vocal a hardstyle break actually wants.
-              </p>
-              <Button
-                className="mt-6"
-                onClick={() => {
-                  pickVocal(cover);
-                  void navigate({ to: "/studio" });
-                }}
-              >
-                Roll this into a track
-              </Button>
-            </div>
+      {report ? (
+        <section className="border-b border-border bg-surface">
+          <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+            <Eyebrow>Last analysis</Eyebrow>
+            <p className="mt-2 text-sm leading-relaxed text-foreground">{report.summary}</p>
+            <Link to="/analyse" className="mt-3 inline-flex h-11 items-center text-sm text-muted underline-offset-2 hover:text-foreground hover:underline">
+              Open the report — judged against {HH_GENRE_BY_ID[report.target].label} →
+            </Link>
           </div>
         </section>
       ) : null}
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <Eyebrow>From the catalog</Eyebrow>
-            <h2 className="font-display mt-2 text-2xl tracking-wide text-foreground sm:text-3xl">
-              Cuts people actually sample
-            </h2>
-          </div>
-          <Link to="/catalog" className="hidden text-sm text-muted hover:text-foreground sm:inline">
-            All {VOCALS.length} →
-          </Link>
-        </div>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.map((v) => (
-            <li key={v.id}>
-              <VocalCard
-                v={v}
-                onPick={(picked) => {
-                  pickVocal(picked);
-                  void navigate({ to: "/studio" });
-                }}
-              />
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => (
+            <li key={f.to}>
+              <Link to={f.to} className="flex h-full flex-col rounded-xl bg-surface p-4 shadow-border transition-[background-color,box-shadow] duration-150 hover:bg-surface-2 hover:shadow-border-hover">
+                <f.icon className="size-5 text-muted" />
+                <p className="font-display mt-3 text-lg leading-tight tracking-wide text-foreground">{f.t}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{f.d}</p>
+              </Link>
             </li>
           ))}
         </ul>
-        <Link to="/catalog" className="mt-6 inline-flex h-11 items-center text-sm text-muted hover:text-foreground sm:hidden">
-          All {VOCALS.length} vocals →
-        </Link>
       </section>
 
       <section className="border-y border-border bg-surface">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6 sm:py-16">
           {[
-            {
-              n: "01",
-              t: "Find a vocal",
-              d: "Browse eurodance, house, trance, 90s happy. Tap a title. No lyrics, no audio — just what to look for.",
-            },
-            {
-              n: "02",
-              t: "Roll a lane",
-              d: "Studio maps it onto a hard-dance act: kick, bass, hook, 16-bar DJ phrases. 90% of rolls stay 4×4.",
-            },
-            {
-              n: "03",
-              t: "Source it yourself",
-              d: "YouTube and Discogs search the title and year. You sample and clear it. This is a starting point, not a pack.",
-            },
+            { n: "01", t: "Bounce it", d: "Export a WAV or MP3 of the whole track or just a drop. Nothing is uploaded — analysis runs in your browser." },
+            { n: "02", t: "Read the findings", d: "Fix / check / good on tempo, kick, low end, mids, highs, loudness, dynamics, width, key and structure — with the lane's numbers next to yours." },
+            { n: "03", t: "Do the easy or the hard fix", d: "Each finding names the plugins you own for the job, the Serum patch when one applies, and the closest references to listen to." },
           ].map((s) => (
             <div key={s.n}>
               <p className="font-mono text-xs tabular-nums text-subtle">{s.n}</p>
@@ -136,19 +100,15 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-        <Eyebrow>Styles in the pile</Eyebrow>
-        <h2 className="font-display mt-2 text-2xl tracking-wide text-foreground sm:text-3xl">
-          Filter the catalog
-        </h2>
-        <ul className="mt-8 flex flex-wrap gap-2">
-          {VOCAL_STYLES.map((s) => (
-            <li key={s.id}>
-              <Link
-                to="/catalog"
-                onClick={() => setStyle(s.id)}
-                className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm text-foreground shadow-border hover:bg-surface-2"
-              >
-                {s.label}
+        <Eyebrow>The lanes</Eyebrow>
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {HH_GENRES.map((g) => (
+            <li key={g.id}>
+              <Link to="/genres" className="block rounded-xl bg-surface p-4 shadow-border transition-[background-color] duration-150 hover:bg-surface-2">
+                <p className="font-display text-base tracking-wide text-foreground">{g.label}</p>
+                <p className="mt-1 font-mono text-xs tabular-nums text-muted">
+                  {g.targets.bpm[0]}–{g.targets.bpm[1]} BPM · {g.years}
+                </p>
               </Link>
             </li>
           ))}
@@ -156,37 +116,22 @@ function Home() {
       </section>
 
       <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <Eyebrow>Write into these</Eyebrow>
-              <h2 className="font-display mt-2 text-2xl tracking-wide text-foreground sm:text-3xl">
-                500 production lanes
-              </h2>
-            </div>
-            <Link to="/lanes" className="text-sm text-muted hover:text-foreground">
-              All lanes →
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 sm:py-16">
+          <div>
+            <Eyebrow>Studio saying</Eyebrow>
+            <p className="font-display mt-3 text-2xl leading-snug tracking-wide text-foreground">“{quote.text}”</p>
+            <p className="mt-2 text-sm text-muted">{quote.who}</p>
+          </div>
+          <div>
+            <Eyebrow>Also here</Eyebrow>
+            <p className="font-display mt-3 text-2xl leading-snug tracking-wide text-foreground">Vocal source</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              {VOCALS.length} vocals people chop into hardstyle, mapped onto production lanes with the idea roller.
+            </p>
+            <Link to="/catalog" className="mt-3 inline-flex h-11 items-center text-sm text-muted underline-offset-2 hover:text-foreground hover:underline">
+              Browse the vocal catalog →
             </Link>
           </div>
-          <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {GENRES.map((g) => {
-              const n = ARTISTS.filter((a) => a.genre === g.id).length;
-              return (
-                <li key={g.id}>
-                  <Link
-                    to="/lanes"
-                    onClick={() => setGenre(g.id, false)}
-                    className="block rounded-xl bg-surface p-4 shadow-border transition-[background-color] duration-150 hover:bg-surface-2"
-                  >
-                    <p className="font-display text-lg tracking-wide text-foreground">{g.label}</p>
-                    <p className="mt-1 font-mono text-xs tabular-nums text-muted">
-                      {n} acts · {g.bpm} BPM
-                    </p>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
         </div>
       </section>
     </div>
