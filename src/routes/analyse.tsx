@@ -3,11 +3,12 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { FileAudio, RotateCw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { buildReport, type Finding, type Report } from "@/lib/hh/analysis";
-import { HH_GENRE_BY_ID, type HhGenreId } from "@/lib/hh/genres";
+import { findGenre } from "@/lib/hh/customise";
+import type { HhGenreId } from "@/lib/hh/genres";
 import { DAWS } from "@/lib/hh/plugins-kb";
 import { ACCEPTED, analyseFile } from "@/lib/hh/run-analysis";
 import { FILTER_MIX_RULES, SERUM_PATCHES } from "@/lib/hh/serum";
-import { useHh } from "@/lib/hh/store";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { fmtTime } from "@/lib/hh/arrange";
 import { Button } from "@/components/ui/button";
 import { Chip, Page, PageTitle } from "@/components/site-ui";
@@ -42,6 +43,8 @@ function AnalysePage() {
   const daw = useHh((s) => s.daw);
   const plugins = useHh((s) => s.plugins);
   const ownedIds = useHh((s) => s.ownedIds);
+  const custom = useHh((s) => s.custom);
+  const lanes = useLanes();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState({ p: 0, label: "" });
   const [drag, setDrag] = useState(false);
@@ -54,7 +57,7 @@ function AnalysePage() {
       setProgress({ p: 0, label: "Starting" });
       try {
         const analysis = await analyseFile(file, (p, label) => setProgress({ p, label }));
-        const r = buildReport(analysis, { fileName: file.name, target: targetLane, owned: ownedIds(), daw });
+        const r = buildReport(analysis, { fileName: file.name, target: targetLane, owned: ownedIds(), daw, genres: lanes, prefs: custom.analysis, rolePins: custom.rolePins });
         setReport(r);
         toast(`Analysed ${file.name}`);
       } catch (e) {
@@ -63,13 +66,14 @@ function AnalysePage() {
         setBusy(false);
       }
     },
-    [daw, ownedIds, setReport, targetLane],
+    [daw, ownedIds, setReport, targetLane, lanes, custom],
   );
 
   const rejudge = (lane: HhGenreId | "auto") => {
     setTargetLane(lane);
-    if (report) setReport(buildReport(report.analysis, { fileName: report.fileName, target: lane, owned: ownedIds(), daw }));
+    if (report) setReport(buildReport(report.analysis, { fileName: report.fileName, target: lane, owned: ownedIds(), daw, genres: lanes, prefs: custom.analysis, rolePins: custom.rolePins }));
   };
+  const laneLabel = (id: HhGenreId) => findGenre(lanes, id).label;
 
   const findings = useMemo(() => (report ? report.findings.filter((f) => area === "all" || f.area === area) : []), [report, area]);
 
@@ -123,7 +127,7 @@ function AnalysePage() {
               Choose a file
             </Button>
             <p className="mt-3 text-xs text-muted">
-              Judging against: {targetLane === "auto" ? "the closest lane (auto)" : HH_GENRE_BY_ID[targetLane].label} · DAW {DAWS.find((d) => d.id === daw)?.label} · {plugins.length ? `${plugins.length} plugins scanned` : "no plugin scan yet"}
+              Judging against: {targetLane === "auto" ? "the closest lane (auto)" : laneLabel(targetLane)} · DAW {DAWS.find((d) => d.id === daw)?.label} · {plugins.length ? `${plugins.length} plugins scanned` : "no plugin scan yet"}
             </p>
           </>
         )}
@@ -148,6 +152,15 @@ function AnalysePage() {
       ) : null}
 
       {report ? <ReportView report={report} findings={findings} area={area} setArea={setArea} onPick={(id) => rejudge(id as HhGenreId)} /> : null}
+      {report && custom.analysis.strictness !== "normal" || (report && Object.values(custom.analysis.areas).some((v) => !v)) ? (
+        <p className="mt-4 text-xs text-muted">
+          Judged with {custom.analysis.strictness} strictness{Object.values(custom.analysis.areas).some((v) => !v) ? ", some areas hidden" : ""} —{" "}
+          <Link to="/customise" className="underline underline-offset-2 hover:text-foreground">
+            change in Customise
+          </Link>
+          .
+        </p>
+      ) : null}
     </Page>
   );
 }
@@ -166,7 +179,11 @@ function ReportView({
   onPick: (id: string) => void;
 }) {
   const a = report.analysis;
-  const g = HH_GENRE_BY_ID[report.target];
+  const lanes = useLanes();
+  const cards = useHh((s) => s.custom.appearance.reportCards);
+  const approach = useHh((s) => s.custom.analysis.approach);
+  const g = findGenre(lanes, report.target);
+  const label = (id: string) => findGenre(lanes, id).label;
   const counts = { fix: report.findings.filter((f) => f.severity === "fix").length, check: report.findings.filter((f) => f.severity === "check").length, good: report.findings.filter((f) => f.severity === "good").length };
   const patches = SERUM_PATCHES.filter((p) => p.lanes.includes(report.target)).slice(0, 3);
   const reportText = [
@@ -201,19 +218,19 @@ function ReportView({
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
+        {cards.fit ? <Card>
           <div className="flex items-baseline justify-between gap-2">
             <H3>Lane fit</H3>
             <span className="text-xs text-muted">{report.targetMode === "auto" ? "auto: best fit" : "judging against your pick"}</span>
           </div>
           <div className="mt-3">
-            <MatchBars rows={report.matches.map((m) => ({ id: m.genre, label: HH_GENRE_BY_ID[m.genre].label, score: m.score }))} activeId={report.target} onPick={onPick} />
+            <MatchBars rows={report.matches.map((m) => ({ id: m.genre, label: label(m.genre), score: m.score }))} activeId={report.target} onPick={onPick} />
           </div>
           <p className="mt-3 text-xs leading-relaxed text-muted">
-            {report.matches[0].reasons.length ? `${HH_GENRE_BY_ID[report.matches[0].genre].label}: ${report.matches[0].reasons.join("; ")}.` : "Click a lane to be judged against it."}
+            {report.matches[0].reasons.length ? `${label(report.matches[0].genre)}: ${report.matches[0].reasons.join("; ")}.` : "Click a lane to be judged against it."}
           </p>
-        </Card>
-        <Card className="lg:col-span-2">
+        </Card> : null}
+        {cards.spectrum ? <Card className={cards.fit ? "lg:col-span-2" : "lg:col-span-3"}>
           <H3>Spectrum vs {g.label}</H3>
           <div className="mt-3">
             <SpectrumChart spectrum={a.spectrum} target={g.targets.bands} />
@@ -221,10 +238,10 @@ function ReportView({
           <Details summary="Band table">
             <BandCompare bands={a.bands} target={g.targets.bands} />
           </Details>
-        </Card>
+        </Card> : null}
       </div>
 
-      <Card>
+      {cards.structure ? <Card>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <H3>Structure</H3>
           <SectionLegend />
@@ -242,7 +259,7 @@ function ReportView({
           </Link>
           .
         </p>
-      </Card>
+      </Card> : null}
 
       <section>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -263,14 +280,14 @@ function ReportView({
         <ul className="mt-4 flex flex-col gap-3">
           {findings.map((f) => (
             <li key={f.id}>
-              <FindingCard f={f} />
+              <FindingCard f={f} approach={approach} />
             </li>
           ))}
         </ul>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        {cards.refs ? <Card>
           <Kicker>Listen to</Kicker>
           <H3 className="mt-2">Closest {g.label} references by tempo</H3>
           <ol className="mt-3 flex flex-col gap-2">
@@ -287,10 +304,10 @@ function ReportView({
             ))}
           </ol>
           <Link to="/genres" className="mt-3 inline-flex h-11 items-center text-xs text-muted underline-offset-2 hover:text-foreground hover:underline">
-            All 50 {g.label} references →
+            All {g.label} references →
           </Link>
-        </Card>
-        <Card>
+        </Card> : null}
+        {cards.serum ? <Card>
           <Kicker>Default advice</Kicker>
           <H3 className="mt-2">Serum and filters for {g.label}</H3>
           <ul className="mt-3 flex flex-col gap-2">
@@ -316,10 +333,10 @@ function ReportView({
           </ul>
           <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-subtle">Filter rules</p>
           <Bullets items={FILTER_MIX_RULES.slice(0, 3).map((r) => `${r.title}: ${r.body}`)} className="mt-2 text-xs" />
-        </Card>
+        </Card> : null}
       </div>
 
-      <Card>
+      {cards.laneNotes ? <Card>
         <Kicker>Lane notes</Kicker>
         <p className="mt-2 text-sm leading-relaxed text-foreground">{g.summary}</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -334,7 +351,7 @@ function ReportView({
             </div>
           ))}
         </div>
-      </Card>
+      </Card> : null}
 
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline">
@@ -352,7 +369,7 @@ function ReportView({
   );
 }
 
-function FindingCard({ f }: { f: Finding }) {
+function FindingCard({ f, approach }: { f: Finding; approach: "both" | "easy" | "hard" }) {
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-2">
@@ -372,7 +389,14 @@ function FindingCard({ f }: { f: Finding }) {
       </dl>
       <p className="mt-3 text-sm leading-relaxed text-muted">{f.detail}</p>
       <div className="mt-3">
-        <EasyHard easy={f.easy} hard={f.hard} />
+        {approach === "both" ? (
+          <EasyHard easy={f.easy} hard={f.hard} />
+        ) : (
+          <div className="rounded-lg bg-surface-2 p-3">
+            <p className={`text-xs font-semibold uppercase tracking-widest ${approach === "easy" ? "text-ok" : "text-warn"}`}>{approach === "easy" ? "Easy way" : "Hard way"}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-foreground">{approach === "easy" ? f.easy : f.hard}</p>
+          </div>
+        )}
       </div>
       {f.plugins.length || f.serum ? (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">

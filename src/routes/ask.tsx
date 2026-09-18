@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { MessageSquare, Sparkles } from "lucide-react";
-import { askHelperAi, searchLocal, type AskAiResult } from "@/lib/hh/ask";
-import { HH_GENRE_BY_ID } from "@/lib/hh/genres";
+import { askHelperAi, searchLocal, type AskAiResult, type Doc } from "@/lib/hh/ask";
+import { findGenre } from "@/lib/hh/customise";
 import { QUOTES } from "@/lib/hh/knowledge";
 import { DAWS } from "@/lib/hh/plugins-kb";
-import { useHh } from "@/lib/hh/store";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page, PageTitle } from "@/components/site-ui";
@@ -35,8 +35,20 @@ function AskPage() {
   const report = useHh((s) => s.report);
   const daw = useHh((s) => s.daw);
   const plugins = useHh((s) => s.plugins);
-  const hits = useMemo(() => (asked ? searchLocal(asked, 8) : []), [asked]);
-  const quote = QUOTES[Math.abs(hash(asked || "hh")) % QUOTES.length];
+  const notes = useHh((s) => s.custom.notes);
+  const ownQuotes = useHh((s) => s.custom.quotes);
+  const lanes = useLanes();
+  const extra = useMemo<Doc[]>(
+    () => [
+      ...notes.map((n) => ({ id: n.id, kind: "note" as const, title: n.title, body: `${n.body} ${n.tags.join(" ")}`, route: "/customise" })),
+      ...ownQuotes.map((q) => ({ id: q.id, kind: "quote" as const, title: q.text, body: q.who, route: "/customise" })),
+      ...lanes.filter((g) => g.id.startsWith("custom-")).map((g) => ({ id: g.id, kind: "genre" as const, title: `${g.label} (${g.aka})`, body: `${g.summary} ${g.dna.join(" ")} ${g.kick} ${g.lead}`, route: "/genres" })),
+    ],
+    [notes, ownQuotes, lanes],
+  );
+  const hits = useMemo(() => (asked ? searchLocal(asked, 8, extra) : []), [asked, extra]);
+  const pool = ownQuotes.length ? [...ownQuotes, ...QUOTES] : QUOTES;
+  const quote = pool[Math.abs(hash(asked || "hh")) % pool.length];
 
   const submit = (text: string) => {
     setAsked(text.trim());
@@ -50,6 +62,7 @@ function AskPage() {
     try {
       const context = [
         report ? `Producer's last analysis: ${report.summary}` : "",
+        notes.length ? `Producer's own notes: ${notes.slice(0, 10).map((n) => `${n.title}: ${n.body}`).join(" | ")}` : "",
         `DAW: ${DAWS.find((d) => d.id === daw)?.label ?? daw}. Plugins owned: ${plugins.slice(0, 60).map((p) => p.name).join(", ") || "unknown"}.`,
         ...hits.slice(0, 5).map((h) => `[${h.doc.kind}] ${h.doc.title}: ${h.doc.body.slice(0, 700)}`),
       ]
@@ -152,7 +165,7 @@ function AskPage() {
       </Card>
       {report ? (
         <p className="mt-4 text-xs text-muted">
-          Context in use: {report.fileName} judged against {HH_GENRE_BY_ID[report.target].label}. <Link to="/analyse" className="underline underline-offset-2">Change</Link>
+          Context in use: {report.fileName} judged against {findGenre(lanes, report.target).label}. <Link to="/analyse" className="underline underline-offset-2">Change</Link>
         </p>
       ) : null}
     </Page>

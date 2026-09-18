@@ -16,6 +16,7 @@ const NAV = [
   { to: "/arrange" as const, label: "Arrange" },
   { to: "/ask" as const, label: "Ask" },
   { to: "/learn" as const, label: "Learn" },
+  { to: "/customise" as const, label: "Customise" },
 ];
 
 const VOCAL_NAV = [
@@ -30,12 +31,32 @@ export function SiteShell({ children }: { children: ReactNode }) {
   const hydrateVs = useVs((s) => s.hydrate);
   const hydrateHh = useHh((s) => s.hydrate);
   const pluginCount = useHh((s) => s.plugins.length);
+  const appearance = useHh((s) => s.custom.appearance);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     hydrateVs();
     hydrateHh();
   }, [hydrateVs, hydrateHh]);
+
+  // appearance customisation: accent, chart series colour, font, density
+  useEffect(() => {
+    const root = document.documentElement;
+    const st = root.style;
+    if (appearance.accent) {
+      st.setProperty("--color-primary", appearance.accent);
+      st.setProperty("--color-primary-foreground", readableOn(appearance.accent));
+      st.setProperty("--color-ring", appearance.accent);
+    } else {
+      st.removeProperty("--color-primary");
+      st.removeProperty("--color-primary-foreground");
+      st.removeProperty("--color-ring");
+    }
+    if (appearance.series) st.setProperty("--color-series-1", appearance.series);
+    else st.removeProperty("--color-series-1");
+    root.classList.toggle("hh-plain", appearance.font === "plain");
+    root.classList.toggle("hh-compact", appearance.density === "compact");
+  }, [appearance]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-foreground">
@@ -111,4 +132,14 @@ export function SiteShell({ children }: { children: ReactNode }) {
       </footer>
     </div>
   );
+}
+
+/** Black or off-white ink for text on a given hex background. */
+function readableOn(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.55 ? "#0c0c0b" : "#f4efe6";
 }

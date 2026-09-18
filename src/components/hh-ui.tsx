@@ -1,7 +1,8 @@
 import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Severity } from "@/lib/hh/analysis";
-import { HH_GENRES, type HhGenreId } from "@/lib/hh/genres";
+import type { HhGenreId } from "@/lib/hh/genres";
+import { useLanes } from "@/lib/hh/store";
 import { cn } from "@/lib/utils";
 import { Chip } from "@/components/site-ui";
 
@@ -56,6 +57,7 @@ export function LaneChips({
   onChange: (g: HhGenreId | "auto") => void;
   allowAuto?: boolean;
 }) {
+  const lanes = useLanes();
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
       {allowAuto ? (
@@ -63,7 +65,7 @@ export function LaneChips({
           Auto
         </Chip>
       ) : null}
-      {HH_GENRES.map((g) => (
+      {lanes.map((g) => (
         <Chip key={g.id} active={value === g.id} onClick={() => onChange(g.id)}>
           {g.label}
         </Chip>

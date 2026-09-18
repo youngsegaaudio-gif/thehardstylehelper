@@ -14,6 +14,7 @@ import { Route as AnalyseRouteImport } from './routes/analyse'
 import { Route as ArrangeRouteImport } from './routes/arrange'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as CustomiseRouteImport } from './routes/customise'
 import { Route as GenresRouteImport } from './routes/genres'
 import { Route as LanesRouteImport } from './routes/lanes'
 import { Route as LearnRouteImport } from './routes/learn'
@@ -47,6 +48,11 @@ const AskRoute = AskRouteImport.update({
 const CatalogRoute = CatalogRouteImport.update({
   id: '/catalog',
   path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomiseRoute = CustomiseRouteImport.update({
+  id: '/customise',
+  path: '/customise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GenresRoute = GenresRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/arrange': typeof ArrangeRoute
   '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/customise': typeof CustomiseRoute
   '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
   '/learn': typeof LearnRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/arrange': typeof ArrangeRoute
   '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/customise': typeof CustomiseRoute
   '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
   '/learn': typeof LearnRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/arrange': typeof ArrangeRoute
   '/ask': typeof AskRoute
   '/catalog': typeof CatalogRoute
+  '/customise': typeof CustomiseRoute
   '/genres': typeof GenresRoute
   '/lanes': typeof LanesRoute
   '/learn': typeof LearnRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/arrange'
     | '/ask'
     | '/catalog'
+    | '/customise'
     | '/genres'
     | '/lanes'
     | '/learn'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/arrange'
     | '/ask'
     | '/catalog'
+    | '/customise'
     | '/genres'
     | '/lanes'
     | '/learn'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/arrange'
     | '/ask'
     | '/catalog'
+    | '/customise'
     | '/genres'
     | '/lanes'
     | '/learn'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   ArrangeRoute: typeof ArrangeRoute
   AskRoute: typeof AskRoute
   CatalogRoute: typeof CatalogRoute
+  CustomiseRoute: typeof CustomiseRoute
   GenresRoute: typeof GenresRoute
   LanesRoute: typeof LanesRoute
   LearnRoute: typeof LearnRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customise': {
+      id: '/customise'
+      path: '/customise'
+      fullPath: '/customise'
+      preLoaderRoute: typeof CustomiseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/genres': {
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArrangeRoute: ArrangeRoute,
   AskRoute: AskRoute,
   CatalogRoute: CatalogRoute,
+  CustomiseRoute: CustomiseRoute,
   GenresRoute: GenresRoute,
   LanesRoute: LanesRoute,
   LearnRoute: LearnRoute,

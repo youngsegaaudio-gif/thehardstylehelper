@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, AudioWaveform, BookOpen, FolderSearch, LayoutList, MessageSquare, SlidersHorizontal, Waves, Music } from "lucide-react";
-import { HH_GENRES, HH_GENRE_BY_ID } from "@/lib/hh/genres";
+import { findGenre } from "@/lib/hh/customise";
 import { QUOTES } from "@/lib/hh/knowledge";
 import { PLUGIN_KB } from "@/lib/hh/plugins-kb";
-import { useHh } from "@/lib/hh/store";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { VOCALS } from "@/lib/hs-catalog";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/site-ui";
@@ -27,7 +27,10 @@ const FEATURES = [
 function Home() {
   const report = useHh((s) => s.report);
   const pluginCount = useHh((s) => s.plugins.length);
-  const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  const ownQuotes = useHh((s) => s.custom.quotes);
+  const lanes = useLanes();
+  const pool = ownQuotes.length ? [...ownQuotes, ...QUOTES] : QUOTES;
+  const quote = pool[new Date().getDate() % pool.length];
 
   return (
     <div>
@@ -35,7 +38,7 @@ function Home() {
         <div className="hs-staff pointer-events-none absolute inset-x-0 top-10 h-16 opacity-30" />
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-24">
           <Eyebrow>
-            {HH_GENRES.length} lanes · {HH_GENRES.length * 50} references · {PLUGIN_KB.length} plugins known
+            {lanes.length} lanes · 500 references · {PLUGIN_KB.length} plugins known
           </Eyebrow>
           <h1 className="font-display mt-4 max-w-3xl text-4xl leading-none tracking-wide text-foreground sm:text-6xl">
             Analyse your track. Get told what to fix.
@@ -63,7 +66,7 @@ function Home() {
             <Eyebrow>Last analysis</Eyebrow>
             <p className="mt-2 text-sm leading-relaxed text-foreground">{report.summary}</p>
             <Link to="/analyse" className="mt-3 inline-flex h-11 items-center text-sm text-muted underline-offset-2 hover:text-foreground hover:underline">
-              Open the report — judged against {HH_GENRE_BY_ID[report.target].label} →
+              Open the report — judged against {findGenre(lanes, report.target).label} →
             </Link>
           </div>
         </section>
@@ -102,7 +105,7 @@ function Home() {
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
         <Eyebrow>The lanes</Eyebrow>
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {HH_GENRES.map((g) => (
+          {lanes.map((g) => (
             <li key={g.id}>
               <Link to="/genres" className="block rounded-xl bg-surface p-4 shadow-border transition-[background-color] duration-150 hover:bg-surface-2">
                 <p className="font-display text-base tracking-wide text-foreground">{g.label}</p>

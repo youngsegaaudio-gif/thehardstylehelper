@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, RotateCcw, X } from "lucide-react";
 import { BAND_KEYS, BAND_LABELS } from "@/lib/hh/dsp";
-import { HH_GENRES, HH_GENRE_BY_ID, type HhGenreId } from "@/lib/hh/genres";
+import { findGenre } from "@/lib/hh/customise";
+import type { HhGenreId } from "@/lib/hh/genres";
 import type { RefTrack } from "@/lib/hh/refs";
-import { useHh } from "@/lib/hh/store";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page, PageTitle, SearchField } from "@/components/site-ui";
@@ -26,6 +27,7 @@ function GenresPage() {
   const addRef = useHh((s) => s.addRef);
   const report = useHh((s) => s.report);
   const refsAll = useHh((s) => s.refs);
+  const lanes = useLanes();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ artist: "", title: "", year: "", bpm: "", note: "" });
 
@@ -33,7 +35,7 @@ function GenresPage() {
     if (report?.target) setLane(report.target);
   }, [report?.target]);
 
-  const g = HH_GENRE_BY_ID[lane];
+  const g = findGenre(lanes, lane);
   const refs = useMemo(() => {
     const all = refsAll().filter((r) => r.genre === lane);
     const ql = q.trim().toLowerCase();
@@ -75,7 +77,12 @@ function GenresPage() {
             <Kicker>
               {g.aka} · {g.years}
             </Kicker>
-            <H2 className="mt-2">{g.label}</H2>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <H2>{g.label}</H2>
+              <Link to="/customise" search={{ tab: "lanes", lane: g.id }} className="inline-flex h-9 items-center rounded-md bg-surface-2 px-3 text-xs text-muted shadow-border hover:text-foreground">
+                Edit this lane
+              </Link>
+            </div>
             <p className="mt-3 text-sm leading-relaxed text-foreground">{g.summary}</p>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Stat label="Tempo" value={`${g.targets.bpm[0]}–${g.targets.bpm[1]}`} sub="BPM" />
@@ -167,7 +174,7 @@ function GenresPage() {
                 </tr>
               </thead>
               <tbody>
-                {HH_GENRES.map((x) => (
+                {lanes.map((x) => (
                   <tr key={x.id} className={x.id === lane ? "text-foreground" : "text-muted"}>
                     <td className="py-1">
                       <button type="button" onClick={() => setLane(x.id)} className="text-left hover:text-foreground">

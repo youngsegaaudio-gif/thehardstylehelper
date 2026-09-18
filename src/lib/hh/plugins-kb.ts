@@ -453,7 +453,9 @@ export function stockFor(daw: DawId): KbPlugin[] {
  * Best plugin the user owns for a role. `owned` is a list of KB ids from the
  * scan. Falls back to the DAW's stock tool, then a generic name.
  */
-export function pick(role: PluginRole, owned: string[], daw: DawId): string {
+export function pick(role: PluginRole, owned: string[], daw: DawId, pins?: Partial<Record<PluginRole, string>>): string {
+  const pinned = pins?.[role]?.trim();
+  if (pinned) return pinned;
   const ownedSet = new Set(owned);
   const third = PLUGIN_KB.find((k) => !k.stock && k.roles.includes(role) && ownedSet.has(k.id));
   if (third) return third.name;

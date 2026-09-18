@@ -8,7 +8,7 @@
  * not laws. The 50 tracks per lane live in `refs.ts`.
  */
 
-export type HhGenreId =
+export type BuiltInGenreId =
   | "early"
   | "classic"
   | "euphoric"
@@ -20,7 +20,10 @@ export type HhGenreId =
   | "uptempo"
   | "frenchcore";
 
-export const HH_GENRE_IDS: HhGenreId[] = [
+/** Built-in ids plus any user-created lane id (`custom-…`). */
+export type HhGenreId = BuiltInGenreId | (string & {});
+
+export const HH_GENRE_IDS: BuiltInGenreId[] = [
   "early",
   "classic",
   "euphoric",
@@ -587,10 +590,9 @@ export const HH_GENRES: HhGenre[] = [
   },
 ];
 
-export const HH_GENRE_BY_ID: Record<HhGenreId, HhGenre> = Object.fromEntries(
-  HH_GENRES.map((g) => [g.id, g]),
-) as Record<HhGenreId, HhGenre>;
+/** Built-in lanes only. For user overrides and custom lanes use the store's `genres()`. */
+export const HH_GENRE_BY_ID: Record<string, HhGenre> = Object.fromEntries(HH_GENRES.map((g) => [g.id, g]));
 
 export function hhGenre(id: HhGenreId): HhGenre {
-  return HH_GENRE_BY_ID[id];
+  return HH_GENRE_BY_ID[id] ?? HH_GENRES[0];
 }

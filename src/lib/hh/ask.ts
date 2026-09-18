@@ -12,7 +12,7 @@ import { SERUM_FILTER_GUIDE, SERUM_PATCHES, FILTER_MIX_RULES } from "./serum";
 
 export type Doc = {
   id: string;
-  kind: "faq" | "glossary" | "genre" | "plugin" | "mix" | "serum" | "history" | "quote" | "filter";
+  kind: "faq" | "glossary" | "genre" | "plugin" | "mix" | "serum" | "history" | "quote" | "filter" | "note";
   title: string;
   body: string;
   route: string;
@@ -74,8 +74,8 @@ const STOP = new Set(["the", "a", "an", "is", "my", "how", "do", "i", "to", "of"
 
 export type Hit = { doc: Doc; score: number; snippet: string };
 
-export function searchLocal(q: string, n = 8): Hit[] {
-  const docs = buildIndex();
+export function searchLocal(q: string, n = 8, extra: Doc[] = []): Hit[] {
+  const docs = [...extra, ...buildIndex()];
   const qt = tokens(q);
   if (!qt.length) return [];
   const expanded = new Set<string>();
@@ -95,6 +95,7 @@ export function searchLocal(q: string, n = 8): Hit[] {
     }
     for (const t of expanded) if (!qt.includes(t) && (title.includes(t) || body.includes(t))) score += 0.6;
     if (d.kind === "faq") score *= 1.3;
+    if (d.kind === "note") score *= 1.4;
     if (score > 1.5) {
       // snippet around the first query term
       const first = qt.find((t) => body.includes(t));

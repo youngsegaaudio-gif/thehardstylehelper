@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { EVENTS, FAQ, GLOSSARY, HISTORY, LABELS, QUOTES } from "@/lib/hh/knowledge";
+import { useHh } from "@/lib/hh/store";
 import { Page, PageTitle, SearchField } from "@/components/site-ui";
 import { Card, Details, H2, H3, Kicker } from "@/components/hh-ui";
 
@@ -11,7 +12,10 @@ export const Route = createFileRoute("/learn")({
 
 function LearnPage() {
   const [q, setQ] = useState("");
+  const notes = useHh((s) => s.custom.notes);
+  const ownQuotes = useHh((s) => s.custom.quotes);
   const ql = q.trim().toLowerCase();
+  const myNotes = useMemo(() => (ql ? notes.filter((n) => `${n.title} ${n.body} ${n.tags.join(" ")}`.toLowerCase().includes(ql)) : notes), [ql, notes]);
   const faq = useMemo(() => (ql ? FAQ.filter((f) => `${f.q} ${f.a} ${f.tags.join(" ")}`.toLowerCase().includes(ql)) : FAQ), [ql]);
   const glossary = useMemo(() => (ql ? GLOSSARY.filter((g) => `${g.term} ${g.def}`.toLowerCase().includes(ql)) : GLOSSARY), [ql]);
 
@@ -21,6 +25,29 @@ function LearnPage() {
       <div className="max-w-md">
         <SearchField value={q} onChange={setQ} placeholder="Search the FAQ and glossary" />
       </div>
+
+      {myNotes.length ? (
+        <section className="mt-8">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <Kicker>Your notes</Kicker>
+              <H2 className="mt-2">{myNotes.length} of your own</H2>
+            </div>
+            <Link to="/customise" search={{ tab: "content" }} className="text-sm text-muted hover:text-foreground">
+              Edit →
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {myNotes.map((n) => (
+              <li key={n.id} className="rounded-xl bg-surface p-4 shadow-border">
+                <H3>{n.title}</H3>
+                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-muted">{n.body}</p>
+                {n.tags.length ? <p className="mt-2 text-xs text-subtle">{n.tags.join(" · ")}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="mt-8">
         <Kicker>FAQ</Kicker>
@@ -90,8 +117,8 @@ function LearnPage() {
         <Kicker>Studio sayings</Kicker>
         <H2 className="mt-2">Things producers repeat</H2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {QUOTES.map((qu) => (
-            <li key={qu.text} className="rounded-xl bg-surface p-4 shadow-border">
+          {[...ownQuotes, ...QUOTES].map((qu) => (
+            <li key={`${qu.text}|${qu.who}`} className="rounded-xl bg-surface p-4 shadow-border">
               <p className="font-display text-base leading-snug tracking-wide text-foreground">“{qu.text}”</p>
               <p className="mt-2 text-xs text-muted">{qu.who}</p>
             </li>

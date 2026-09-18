@@ -25,7 +25,9 @@ import {
 } from "@/lib/hh/plugin-scan";
 import { ROLE_GUIDE } from "@/lib/hh/role-guide";
 import { useHh } from "@/lib/hh/store";
+import type { PluginPref } from "@/lib/hh/customise";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Chip, Page, PageTitle, SearchField } from "@/components/site-ui";
 import { Card, CopyButton, Details, EasyHard, Empty, H2, H3, Kicker, Tag } from "@/components/hh-ui";
@@ -58,6 +60,10 @@ function PluginsPage() {
   const removePlugin = useHh((s) => s.removePlugin);
   const clearPlugins = useHh((s) => s.clearPlugins);
   const ownedIds = useHh((s) => s.ownedIds);
+  const pluginPrefs = useHh((s) => s.custom.pluginPrefs);
+  const setPluginPref = useHh((s) => s.setPluginPref);
+  const rolePins = useHh((s) => s.custom.rolePins);
+  const [showHidden, setShowHidden] = useState(false);
   const [paste, setPaste] = useState("");
   const [q, setQ] = useState("");
   const [role, setRole] = useState<PluginRole | "all">("all");
@@ -69,10 +75,16 @@ function PluginsPage() {
   }, []);
 
   const identified = useMemo(
-    () => plugins.map((p) => ({ p, id: identify(p.name) })),
-    [plugins],
+    () =>
+      plugins.map((p) => {
+        const id = identify(p.name);
+        const pref = pluginPrefs[p.name];
+        return { p, id: pref?.roles?.length ? { ...id, roles: pref.roles, guessed: false } : id, pref };
+      }),
+    [plugins, pluginPrefs],
   );
-  const owned = useMemo(() => ownedIds(), [plugins]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hiddenCount = identified.filter((x) => x.pref?.hidden).length;
+  const owned = useMemo(() => ownedIds(), [plugins, pluginPrefs]); // eslint-disable-line react-hooks/exhaustive-deps
   const ownedRoles = useMemo(() => rolesOwned(owned), [owned]);
   const stock = useMemo(() => stockFor(daw), [daw]);
   const roles = useMemo(() => {
@@ -82,10 +94,11 @@ function PluginsPage() {
   }, [identified]);
   const shown = useMemo(() => {
     const ql = q.trim().toLowerCase();
-    return identified.filter(
-      (x) => (role === "all" || x.id.roles.includes(role)) && (!ql || x.p.name.toLowerCase().includes(ql) || x.id.kb?.vendor.toLowerCase().includes(ql)),
-    );
-  }, [identified, q, role]);
+    return identified
+      .filter((x) => showHidden || !x.pref?.hidden)
+      .filter((x) => (role === "all" || x.id.roles.includes(role)) && (!ql || x.p.name.toLowerCase().includes(ql) || x.id.kb?.vendor.toLowerCase().includes(ql)))
+      .sort((a, b) => Number(Boolean(b.pref?.favourite)) - Number(Boolean(a.pref?.favourite)));
+  }, [identified, q, role, showHidden]);
 
   const ingest = (list: ScannedPlugin[], source: string) => {
     if (!list.length) {
@@ -255,10 +268,40 @@ function PluginsPage() {
             <Empty>No scan yet. Choose a folder above, upload one, or paste a list. Your DAW's stock tools are explained below either way.</Empty>
           </div>
         ) : null}
+        {hiddenCount ? (
+          <button type="button" onClick={() => setShowHidden((v) => !v)} className="mt-3 inline-flex h-9 items-center text-xs text-muted underline-offset-2 hover:text-foreground hover:underline">
+            {showHidden ? "Hide" : "Show"} {hiddenCount} hidden plugin{hiddenCount === 1 ? "" : "s"}
+          </button>
+        ) : null}
+        {Object.keys(rolePins).length ? (
+          <p className="mt-3 text-xs text-muted">
+            Pinned: {Object.entries(rolePins).map(([r, n]) => `${ROLE_LABEL[r as PluginRole]} → ${n}`).join(" · ")} —{" "}
+            <Link to="/customise" search={{ tab: "plugins" }} className="underline underline-offset-2 hover:text-foreground">
+              edit pins
+            </Link>
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-muted">
+            Want a specific plugin named for every EQ / compressor / limiter job?{" "}
+            <Link to="/customise" search={{ tab: "plugins" }} className="underline underline-offset-2 hover:text-foreground">
+              Pin plugins to roles
+            </Link>
+            .
+          </p>
+        )}
         <ul className="mt-4 grid gap-2 lg:grid-cols-2">
-          {shown.map(({ p, id }) => (
+          {shown.map(({ p, id, pref }) => (
             <li key={p.name}>
-              <PluginCard name={p.name} formats={p.formats} kb={id.kb} roles={id.roles} guessed={id.guessed} onRemove={() => removePlugin(p.name)} />
+              <PluginCard
+                name={p.name}
+                formats={p.formats}
+                kb={id.kb}
+                roles={id.roles}
+                guessed={id.guessed}
+                pref={pref}
+                onPref={(next) => setPluginPref(p.name, next)}
+                onRemove={() => removePlugin(p.name)}
+              />
             </li>
           ))}
         </ul>
@@ -299,6 +342,8 @@ function PluginCard({
   kb,
   roles,
   guessed,
+  pref,
+  onPref,
   onRemove,
 }: {
   name: string;
@@ -306,14 +351,20 @@ function PluginCard({
   kb: KbPlugin | null;
   roles: PluginRole[];
   guessed: boolean;
+  pref?: PluginPref;
+  onPref?: (p: PluginPref | null) => void;
   onRemove?: () => void;
 }) {
   const guide = kb ?? ROLE_GUIDE[roles[0] ?? "utility"];
+  const [note, setNote] = useState(pref?.note ?? "");
+  const [editRoles, setEditRoles] = useState(false);
+  const patch = (x: Partial<PluginPref>) => onPref?.({ ...(pref ?? {}), ...x });
   return (
     <Details
       summary={
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="font-semibold">{name}</span>
+          {pref?.favourite ? <span className="text-warn">★</span> : null}
+          <span className={pref?.hidden ? "font-semibold line-through opacity-60" : "font-semibold"}>{name}</span>
           {kb ? <span className="text-xs text-muted">{kb.vendor}</span> : null}
           {roles.map((r) => (
             <Tag key={r}>{ROLE_LABEL[r]}</Tag>
@@ -338,6 +389,53 @@ function PluginCard({
           <p className="mt-1 text-sm leading-relaxed text-muted">{guide.hardstyle}</p>
         </div>
         <EasyHard easy={guide.easy} hard={guide.hard} />
+        {pref?.note ? (
+          <div>
+            <H3 className="text-sm">Your note</H3>
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground">{pref.note}</p>
+          </div>
+        ) : null}
+        {onPref ? (
+          <div className="flex flex-col gap-2 rounded-lg bg-bg/60 p-3">
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => patch({ favourite: !pref?.favourite })} className="inline-flex h-9 items-center rounded-md bg-surface-2 px-3 text-xs text-muted shadow-border hover:text-foreground">
+                {pref?.favourite ? "★ Favourite" : "☆ Favourite"}
+              </button>
+              <button type="button" onClick={() => patch({ hidden: !pref?.hidden })} className="inline-flex h-9 items-center rounded-md bg-surface-2 px-3 text-xs text-muted shadow-border hover:text-foreground">
+                {pref?.hidden ? "Unhide (use in advice)" : "Hide from advice"}
+              </button>
+              <button type="button" onClick={() => setEditRoles((v) => !v)} className="inline-flex h-9 items-center rounded-md bg-surface-2 px-3 text-xs text-muted shadow-border hover:text-foreground">
+                {editRoles ? "Done with roles" : "Change roles"}
+              </button>
+            </div>
+            {editRoles ? (
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(ROLE_LABEL) as PluginRole[]).map((r) => {
+                  const on = roles.includes(r);
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        const next = on ? roles.filter((x) => x !== r) : [...roles, r];
+                        patch({ roles: next.length ? next : undefined });
+                      }}
+                      className={`inline-flex h-8 items-center rounded-full px-2.5 text-xs ${on ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted shadow-border"}`}
+                    >
+                      {ROLE_LABEL[r]}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+            <div className="flex gap-2">
+              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Your own note (settings you like, where you use it)" className="h-9 text-xs" />
+              <Button size="sm" variant="outline" onClick={() => patch({ note: note.trim() || undefined })}>
+                Save note
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {onRemove ? (
           <button type="button" onClick={onRemove} className="self-start text-xs text-subtle hover:text-foreground">
             Remove from my list

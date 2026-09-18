@@ -1,21 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Download, RotateCw } from "lucide-react";
 import { arrangementMidi, arrangementText, fmtTime, generateArrangement, type ArrangeMode } from "@/lib/hh/arrange";
-import { HH_GENRES, HH_GENRE_BY_ID, type HhGenreId } from "@/lib/hh/genres";
-import { useHh } from "@/lib/hh/store";
+import { findGenre } from "@/lib/hh/customise";
+import type { HhGenreId } from "@/lib/hh/genres";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, Page, PageTitle } from "@/components/site-ui";
 import { Card, CopyButton, H3, Kicker, LaneChips, Stat, Tag } from "@/components/hh-ui";
 import { SectionStrip, SECTION_LABEL } from "@/components/hh-charts";
 
-const LANES = new Set<string>(HH_GENRES.map((g) => g.id));
-
 export const Route = createFileRoute("/arrange")({
   component: ArrangePage,
-  validateSearch: (s: Record<string, unknown>): { lane?: HhGenreId } =>
-    typeof s.lane === "string" && LANES.has(s.lane) ? { lane: s.lane as HhGenreId } : {},
+  validateSearch: (s: Record<string, unknown>): { lane?: HhGenreId } => (typeof s.lane === "string" && s.lane ? { lane: s.lane } : {}),
   head: () => ({ meta: [{ title: "Arrange · HARDSTYLE HELPER" }] }),
 });
 
@@ -28,6 +26,7 @@ const MODES: { id: ArrangeMode; label: string; hint: string }[] = [
 function ArrangePage() {
   const search = Route.useSearch();
   const report = useHh((s) => s.report);
+  const lanes = useLanes();
   const [lane, setLane] = useState<HhGenreId>(search.lane ?? report?.target ?? "classic");
   const [mode, setMode] = useState<ArrangeMode>("extended");
   const [seed, setSeed] = useState(7);
@@ -37,9 +36,9 @@ function ArrangePage() {
     if (search.lane) setLane(search.lane);
   }, [search.lane]);
 
-  const g = HH_GENRE_BY_ID[lane];
+  const g = findGenre(lanes, lane);
   const tempo = Number(bpm) > 60 && Number(bpm) < 300 ? Number(bpm) : undefined;
-  const a = useMemo(() => generateArrangement(lane, mode, seed, tempo), [lane, mode, seed, tempo]);
+  const a = useMemo(() => generateArrangement(g, mode, seed, tempo), [g, mode, seed, tempo]);
   const text = useMemo(() => arrangementText(a), [a]);
   const yours = report?.analysis.structure;
 
@@ -91,6 +90,13 @@ function ArrangePage() {
         <div className="mt-4">
           <SectionStrip sections={a.sections.map((s) => ({ kind: s.kind, startBar: s.startBar, bars: s.bars, label: s.label }))} totalBars={a.totalBars} title="Generated plan" />
         </div>
+        <p className="mt-2 text-xs text-muted">
+          Sections come from the lane template —{" "}
+          <Link to="/customise" search={{ tab: "lanes", lane: g.id }} className="underline underline-offset-2 hover:text-foreground">
+            edit the template
+          </Link>
+          .
+        </p>
         {yours ? (
           <div className="mt-3">
             <SectionStrip

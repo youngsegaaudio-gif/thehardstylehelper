@@ -42,6 +42,16 @@ and the hard way.
   deployment (`src/lib/hh/ask.ts`).
 - **Learn** (`/learn`) — history, glossary, labels, events, FAQ and studio
   sayings (`src/lib/hh/knowledge.ts`).
+- **Customise** (`/customise`) — everything above is editable and persists on
+  the device (`src/lib/hh/customise.ts`, stored by `store.ts`): lane targets,
+  text and arrangement templates for the built-in lanes; your own lanes
+  (cloned from any lane); hide lanes; analysis strictness, finding areas,
+  easy/hard fix style, lane-fit weights, reference count; pin a plugin to a
+  role so advice always names it; per-plugin notes, favourites, hiding and
+  role overrides (set on the Plugins page); your own notes and sayings (shown
+  on Learn, ranked first in Ask, sent to the AI coach); accent and chart
+  colours, heading font, density, which report cards show; JSON export /
+  import / reset.
 - **Vocal source** (`/catalog`, `/studio`, `/lanes`, `/sound`, `/saved`) — the
   earlier vocal-sample catalog and idea roller, still here.
 - Mac pack zip from `src/lib/mac-pack.ts` (Logic Scripter + MIDI + notes).

@@ -581,11 +581,11 @@ export const HH_REFS: RefTrack[] = [
   ...lane("frenchcore", FRENCHCORE),
 ];
 
-export function refsFor(genre: HhGenreId): RefTrack[] {
-  return HH_REFS.filter((r) => r.genre === genre);
+export function refsFor(genre: HhGenreId, pool: RefTrack[] = HH_REFS): RefTrack[] {
+  return pool.filter((r) => r.genre === genre);
 }
 
-/** Closest references by tempo inside one lane. */
-export function closestRefs(genre: HhGenreId, bpm: number, n = 6): RefTrack[] {
-  return [...refsFor(genre)].sort((a, b) => Math.abs(a.bpm - bpm) - Math.abs(b.bpm - bpm)).slice(0, n);
+/** Closest references by tempo inside one lane (any pool, so user edits count). */
+export function closestRefs(genre: HhGenreId, bpm: number, n = 6, pool: RefTrack[] = HH_REFS): RefTrack[] {
+  return [...refsFor(genre, pool)].sort((a, b) => Math.abs(a.bpm - bpm) - Math.abs(b.bpm - bpm)).slice(0, n);
 }

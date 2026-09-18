@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { HH_GENRE_BY_ID, type HhGenreId } from "@/lib/hh/genres";
+import { findGenre } from "@/lib/hh/customise";
+import type { HhGenreId } from "@/lib/hh/genres";
 import { FILTER_MIX_RULES, SERUM_FILTER_GUIDE, SERUM_PATCHES } from "@/lib/hh/serum";
-import { useHh } from "@/lib/hh/store";
+import { useHh, useLanes } from "@/lib/hh/store";
 import { Page, PageTitle } from "@/components/site-ui";
 import { Bullets, Card, CopyButton, H2, H3, Kicker, LaneChips, Tag } from "@/components/hh-ui";
 
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/serum")({
 
 function SerumPage() {
   const report = useHh((s) => s.report);
+  const lanes = useLanes();
   const [lane, setLane] = useState<HhGenreId | "auto">("auto");
   const effective: HhGenreId | null = lane === "auto" ? (report?.target ?? null) : lane;
   const patches = useMemo(
@@ -29,7 +31,7 @@ function SerumPage() {
       />
       <div className="mb-2 flex flex-wrap items-center gap-3">
         <Kicker>Sort for a lane</Kicker>
-        {effective && lane === "auto" ? <Tag>from your last analysis: {HH_GENRE_BY_ID[effective].label}</Tag> : null}
+        {effective && lane === "auto" ? <Tag>from your last analysis: {findGenre(lanes, effective).label}</Tag> : null}
       </div>
       <LaneChips value={lane} onChange={setLane} allowAuto />
 
@@ -60,7 +62,7 @@ function SerumPage() {
                 <div className="mt-2 flex flex-wrap gap-1">
                   {p.lanes.map((l) => (
                     <Tag key={l} className={l === effective ? "text-foreground" : undefined}>
-                      {HH_GENRE_BY_ID[l].label}
+                      {findGenre(lanes, l).label}
                     </Tag>
                   ))}
                 </div>

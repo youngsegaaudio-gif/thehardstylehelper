@@ -110,3 +110,9 @@
 .fill-sec-drop { fill: var(--color-sec-drop); }
 .fill-sec-mid { fill: var(--color-sec-mid); }
 .fill-sec-outro { fill: var(--color-sec-outro); }
+
+/* appearance customisation */
+html.hh-plain { --font-display: var(--font-sans); }
+html.hh-plain .font-display { letter-spacing: -0.01em; font-weight: 700; }
+html.hh-compact { font-size: 14px; }
+html.hh-compact .rounded-xl.bg-surface.p-4 { padding: 0.75rem; }

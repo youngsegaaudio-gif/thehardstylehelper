@@ -3,9 +3,10 @@
  * easy and hard ways to fix it, and which of the user's plugins to reach for.
  */
 import { BAND_KEYS, BAND_LABELS, hzToNote, type BandKey, type TrackAnalysis } from "./dsp";
-import { HH_GENRES, HH_GENRE_BY_ID, type HhGenreId } from "./genres";
+import { HH_GENRES, type HhGenre, type HhGenreId } from "./genres";
 import { closestRefs, type RefTrack } from "./refs";
-import { pick, type DawId } from "./plugins-kb";
+import { pick, type DawId, type PluginRole } from "./plugins-kb";
+import { DEFAULT_ANALYSIS, strictnessScale, type AnalysisPrefs } from "./customise";
 
 export type FindingArea =
   | "tempo"
@@ -62,9 +63,9 @@ function bpmDistance(bpm: number, range: [number, number]): { d: number; used: n
   return best;
 }
 
-export function matchGenres(a: TrackAnalysis): GenreMatch[] {
+export function matchGenres(a: TrackAnalysis, genres: HhGenre[] = HH_GENRES, weights = DEFAULT_ANALYSIS.weights): GenreMatch[] {
   const out: GenreMatch[] = [];
-  for (const g of HH_GENRES) {
+  for (const g of genres) {
     const t = g.targets;
     const reasons: string[] = [];
     let penalty = 0;
@@ -72,44 +73,44 @@ export function matchGenres(a: TrackAnalysis): GenreMatch[] {
 
     const bd = bpmDistance(a.bpm.value, t.bpm);
     const bpmPen = clamp01(bd.d / 14);
-    penalty += bpmPen * 3;
-    weight += 3;
+    penalty += bpmPen * weights.bpm;
+    weight += weights.bpm;
     if (bd.d === 0) reasons.push(`tempo ${a.bpm.value} sits inside ${t.bpm[0]}–${t.bpm[1]}`);
     else if (bd.d < 6) reasons.push(`tempo close to the lane (${t.bpm[0]}–${t.bpm[1]})`);
 
     let bandDiff = 0;
     for (const k of BAND_KEYS) bandDiff += Math.abs(a.bands[k] - t.bands[k]);
     const bandPen = clamp01(bandDiff / 6 / 7);
-    penalty += bandPen * 2.5;
-    weight += 2.5;
+    penalty += bandPen * weights.bands;
+    weight += weights.bands;
     if (bandPen < 0.3) reasons.push("spectral balance matches");
 
     if (a.loudness.integrated > -60) {
       const lp = clamp01(outside(a.loudness.integrated, t.lufs) / 5);
-      penalty += lp;
-      weight += 1;
+      penalty += lp * weights.lufs;
+      weight += weights.lufs;
       if (lp === 0) reasons.push("loudness in the lane's window");
     }
 
     if (a.kick.count > 8) {
       const kp = clamp01(outside(a.kick.tailBeats, t.kickTail) / 0.3);
-      penalty += kp * 2;
-      weight += 2;
+      penalty += kp * weights.tail;
+      weight += weights.tail;
       if (kp === 0) reasons.push("kick tail length fits");
       else if (kp < 0.5) reasons.push("kick tail close");
     }
 
     const cp = clamp01(outside(a.loudness.crest, t.crest) / 3);
-    penalty += cp * 0.7;
-    weight += 0.7;
+    penalty += cp * weights.crest;
+    weight += weights.crest;
 
     if (a.channels === 2) {
       const wp = clamp01(outside(a.stereo.sideMidDb, t.width) / 6);
-      penalty += wp * 0.5;
-      weight += 0.5;
+      penalty += wp * weights.width;
+      weight += weights.width;
     }
 
-    const score = Math.round((1 - penalty / weight) * 100);
+    const score = weight > 0 ? Math.round((1 - penalty / weight) * 100) : 0;
     out.push({ genre: g.id, score, reasons });
   }
   return out.sort((x, y) => y.score - x.score);
@@ -119,17 +120,31 @@ export function matchGenres(a: TrackAnalysis): GenreMatch[] {
 
 const fmtDb = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(1)} dB`;
 
-export function buildReport(
-  a: TrackAnalysis,
-  opts: { fileName: string; target?: HhGenreId | "auto"; owned: string[]; daw: DawId },
-): Report {
-  const matches = matchGenres(a);
-  const targetMode = opts.target && opts.target !== "auto" ? "chosen" : "auto";
-  const target = targetMode === "chosen" ? (opts.target as HhGenreId) : matches[0].genre;
-  const g = HH_GENRE_BY_ID[target];
+export type ReportOpts = {
+  fileName: string;
+  target?: HhGenreId | "auto";
+  owned: string[];
+  daw: DawId;
+  /** lanes to score against (defaults to the built-in ten) */
+  genres?: HhGenre[];
+  prefs?: AnalysisPrefs;
+  rolePins?: Partial<Record<PluginRole, string>>;
+};
+
+export function buildReport(a: TrackAnalysis, opts: ReportOpts): Report {
+  const genres = opts.genres && opts.genres.length ? opts.genres : HH_GENRES;
+  const prefs = opts.prefs ?? DEFAULT_ANALYSIS;
+  const scale = strictnessScale(prefs.strictness);
+  const matches = matchGenres(a, genres, prefs.weights);
+  const wanted = opts.target && opts.target !== "auto" && genres.some((g) => g.id === opts.target) ? opts.target : null;
+  const targetMode = wanted ? "chosen" : "auto";
+  const target: HhGenreId = wanted ?? matches[0].genre;
+  const g = genres.find((x) => x.id === target) ?? genres[0];
   const t = g.targets;
-  const P = (role: Parameters<typeof pick>[0]) => pick(role, opts.owned, opts.daw);
+  const P = (role: Parameters<typeof pick>[0]) => pick(role, opts.owned, opts.daw, opts.rolePins);
   const f: Finding[] = [];
+  // scaled tolerances: strict flags sooner, loose later
+  const tol = (v: number) => v * scale;
 
   /* tempo */
   {
@@ -138,7 +153,7 @@ export function buildReport(
     f.push({
       id: "tempo",
       area: "tempo",
-      severity: inRange ? "good" : bd.d < 5 ? "check" : "fix",
+      severity: inRange ? "good" : bd.d < tol(5) ? "check" : "fix",
       title: inRange ? `Tempo fits ${g.label}` : `Tempo is off the ${g.label} window`,
       measured: `${a.bpm.value} BPM${a.bpm.confidence < 0.5 ? " (low confidence)" : ""}`,
       target: `${t.bpm[0]}–${t.bpm[1]} BPM`,
@@ -161,7 +176,7 @@ export function buildReport(
     f.push({
       id: "kick-tail",
       area: "kick",
-      severity: d === 0 ? "good" : d < 0.15 ? "check" : "fix",
+      severity: d === 0 ? "good" : d < tol(0.15) ? "check" : "fix",
       title: d === 0 ? "Kick tail length fits the lane" : short ? "Kick tail is short for this lane" : "Kick tail is long for this lane",
       measured: `${a.kick.tailMs} ms · ${Math.round(tb * 100)}% of a beat · consistency ${Math.round(a.kick.consistency * 100)}%`,
       target: `${Math.round(t.kickTail[0] * 100)}–${Math.round(t.kickTail[1] * 100)}% of a beat`,
@@ -188,7 +203,7 @@ export function buildReport(
     const centsOff = Math.abs(a.kick.cents);
     let sev: Severity = "good";
     if (a.kick.hz > 0 && !onRoot && !onFifth) sev = "fix";
-    else if (centsOff > 25 || hzOut > 6) sev = "check";
+    else if (centsOff > tol(25) || hzOut > tol(6)) sev = "check";
     f.push({
       id: "kick-pitch",
       area: "kick",
@@ -228,7 +243,7 @@ export function buildReport(
   /* bands */
   const bandFinding = (k: BandKey, area: FindingArea, lowTitle: string, highTitle: string, lowEasy: string, highEasy: string, lowHard: string, highHard: string, pl: string[]) => {
     const diff = a.bands[k] - t.bands[k];
-    const sev: Severity = Math.abs(diff) <= 2.5 ? "good" : Math.abs(diff) <= 5 ? "check" : "fix";
+    const sev: Severity = Math.abs(diff) <= tol(2.5) ? "good" : Math.abs(diff) <= tol(5) ? "check" : "fix";
     f.push({
       id: `band-${k}`,
       area,
@@ -305,7 +320,7 @@ export function buildReport(
     f.push({
       id: "loudness",
       area: "loudness",
-      severity: d === 0 ? "good" : d < 2 ? "check" : "fix",
+      severity: d === 0 ? "good" : d < tol(2) ? "check" : "fix",
       title: d === 0 ? "Loudness is in the lane's window" : quiet ? "Master is quiet for the lane" : "Master is louder than the lane usually goes",
       measured: `${L} LUFS integrated · short-term max ${a.loudness.shortTermMax} · true peak ≈ ${a.loudness.truePeakDb} dBTP`,
       target: `${t.lufs[0]} to ${t.lufs[1]} LUFS · true peak ≤ -0.3 dBTP`,
@@ -348,7 +363,7 @@ export function buildReport(
     f.push({
       id: "crest",
       area: "dynamics",
-      severity: d === 0 ? "good" : d < 1.5 ? "check" : "fix",
+      severity: d === 0 ? "good" : d < tol(1.5) ? "check" : "fix",
       title: d === 0 ? "Drop dynamics look right" : flat ? "Drops are over-squashed" : "Drops are more dynamic than the lane",
       measured: `crest ${c} dB in the loudest blocks · LRA ${a.loudness.lra} LU`,
       target: `crest ${t.crest[0]}–${t.crest[1]} dB · LRA 4–8 LU`,
@@ -385,7 +400,7 @@ export function buildReport(
     f.push({
       id: "low-mono",
       area: "stereo",
-      severity: lowC >= 0.9 ? "good" : lowC >= 0.7 ? "check" : "fix",
+      severity: lowC >= 1 - tol(0.1) ? "good" : lowC >= 1 - tol(0.3) ? "check" : "fix",
       title: lowC >= 0.9 ? "Low end is mono" : "Low end is not mono",
       measured: `correlation below 150 Hz: ${lowC}`,
       target: "≥ 0.9",
@@ -399,7 +414,7 @@ export function buildReport(
     f.push({
       id: "width",
       area: "stereo",
-      severity: d === 0 ? "good" : d < 3 ? "check" : "fix",
+      severity: d === 0 ? "good" : d < tol(3) ? "check" : "fix",
       title: d === 0 ? "Width fits the lane" : w < t.width[0] ? "Mix is narrow for the lane" : "Mix is wide for the lane",
       measured: `side/mid ${w} dB · correlation ${a.stereo.correlation}`,
       target: `${t.width[0]} to ${t.width[1]} dB`,
@@ -474,17 +489,19 @@ export function buildReport(
   }
 
   for (const x of f) x.plugins = [...new Set(x.plugins)];
+  const kept = f.filter((x) => prefs.areas[x.area] !== false);
 
   /* order: fix → check → good */
   const rank: Record<Severity, number> = { fix: 0, check: 1, good: 2 };
-  f.sort((x, y) => rank[x.severity] - rank[y.severity]);
+  kept.sort((x, y) => rank[x.severity] - rank[y.severity]);
 
-  const refs = closestRefs(target, a.bpm.value, 6);
-  const fixes = f.filter((x) => x.severity === "fix").length;
-  const checks = f.filter((x) => x.severity === "check").length;
-  const summary = `${opts.fileName}: ${a.bpm.value} BPM, ${a.key.name}, ${a.loudness.integrated} LUFS, kick ${a.kick.note || "?"} with a ${Math.round(a.kick.tailBeats * 100)}% tail. Closest lane ${HH_GENRE_BY_ID[matches[0].genre].label} (${matches[0].score}%)${targetMode === "chosen" ? `, judged against ${g.label}` : ""}. ${fixes} thing${fixes === 1 ? "" : "s"} to fix, ${checks} to check.`;
+  const refs = closestRefs(target, a.bpm.value, prefs.refCount);
+  const fixes = kept.filter((x) => x.severity === "fix").length;
+  const checks = kept.filter((x) => x.severity === "check").length;
+  const bestLabel = genres.find((x) => x.id === matches[0].genre)?.label ?? matches[0].genre;
+  const summary = `${opts.fileName}: ${a.bpm.value} BPM, ${a.key.name}, ${a.loudness.integrated} LUFS, kick ${a.kick.note || "?"} with a ${Math.round(a.kick.tailBeats * 100)}% tail. Closest lane ${bestLabel} (${matches[0].score}%)${targetMode === "chosen" ? `, judged against ${g.label}` : ""}. ${fixes} thing${fixes === 1 ? "" : "s"} to fix, ${checks} to check.`;
 
-  return { fileName: opts.fileName, createdAt: Date.now(), analysis: a, matches, target, targetMode, findings: f, refs, summary };
+  return { fileName: opts.fileName, createdAt: Date.now(), analysis: a, matches, target, targetMode, findings: kept, refs, summary };
 }
 
 export function describeKickNote(a: TrackAnalysis): string {

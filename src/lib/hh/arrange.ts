@@ -1,5 +1,5 @@
 /** Arrangement generator: per-lane templates, seeded variations, text + MIDI marker export. */
-import { HH_GENRE_BY_ID, type HhGenreId, type SectionTemplate } from "./genres";
+import { HH_GENRE_BY_ID, type HhGenre, type HhGenreId, type SectionTemplate } from "./genres";
 
 export type ArrangeMode = "extended" | "radio" | "dj";
 
@@ -19,6 +19,7 @@ export type Arrangement = {
   totalBars: number;
   totalSec: number;
   notes: string[];
+  label: string;
 };
 
 function rng(seed: number) {
@@ -71,8 +72,8 @@ const VARIANTS: Record<SectionTemplate["kind"], string[]> = {
   ],
 };
 
-export function generateArrangement(genre: HhGenreId, mode: ArrangeMode, seed: number, bpm?: number): Arrangement {
-  const g = HH_GENRE_BY_ID[genre];
+export function generateArrangement(genre: HhGenreId | HhGenre, mode: ArrangeMode, seed: number, bpm?: number): Arrangement {
+  const g: HhGenre = typeof genre === "string" ? HH_GENRE_BY_ID[genre] : genre;
   const r = rng(seed);
   const tempo = bpm ?? g.bpm;
   let template = g.template.map((s) => ({ ...s }));
@@ -126,7 +127,7 @@ export function generateArrangement(genre: HhGenreId, mode: ArrangeMode, seed: n
   notes.push(g.arrangement);
   if (mode === "dj") notes.push("DJ mode: 32-bar intro and outro, every section on an 8-bar grid.");
   if (mode === "radio") notes.push("Radio mode: under four minutes, one intro, short breaks.");
-  return { genre, mode, bpm: tempo, seed, sections, totalBars, totalSec, notes };
+  return { genre: g.id, mode, bpm: tempo, seed, sections, totalBars, totalSec, notes, label: g.label };
 }
 
 export function fmtTime(sec: number): string {
@@ -136,9 +137,8 @@ export function fmtTime(sec: number): string {
 }
 
 export function arrangementText(a: Arrangement): string {
-  const g = HH_GENRE_BY_ID[a.genre];
   const lines = [
-    `${g.label} arrangement — ${a.bpm} BPM — ${a.totalBars} bars (${fmtTime(a.totalSec)})`,
+    `${a.label} arrangement — ${a.bpm} BPM — ${a.totalBars} bars (${fmtTime(a.totalSec)})`,
     "",
     ...a.sections.map(
       (s) =>
